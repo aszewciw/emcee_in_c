@@ -345,12 +345,13 @@ void mca_run(struct mca_chain *chain,
    On return the value of z is set and the newpars are filled in.
 
 */
-
+/*
 void mca_stretch_move(double a, double z,
                       const double *pars,
                       const double *comp_pars,
                       size_t ndim,
                       double *newpars);
+*/
 
 /*
    Determine of a stretch move should be accepted
@@ -358,11 +359,12 @@ void mca_stretch_move(double a, double z,
    Returns 1 if yes 0 if no
 */
 
-static int mca_accept(int ndim,
-                      double lnprob_old,
-                      double lnprob_new,
-                      double z);
-
+/*
+int mca_accept(int ndim,
+               double lnprob_old,
+               double lnprob_new,
+               double z);
+*/
 /*
    copy the parameters
 */
