@@ -1,5 +1,73 @@
 /*
-    for docs see mca.h
+   mca - a library implementing affine invariant MCMC as
+   outlined in Goodman & Weare 2010.
+
+   I took some implementation inspiration from the Emcee python version.
+
+   I made a choice to use have mca_run() take in the value a as a parameter
+   rather than put this in some "self" struct.  Since guesses are chains, it
+   would be odd for the a to be in the chain.
+
+   Example
+   -------
+
+   // assume the data are stored in the struct mydata and our ln(prob) function
+   // is called lnprob.  We will use nwalkers
+
+   // first make a guess
+   double guess[NPARS];
+   guess[0] = ..;  // fill in guess
+
+   // now take a random ball around the guess and assign values
+   // for each walker.   This gets stored in a 1-step mca_chain
+   double widths[NPARS];
+   widths[0] = ...;  // fill in widths
+   size_t nwalkers=20;
+   struct mca_chain *start_chain=mca_make_guess(guess, widths, NPARS, nwalkers);
+
+   // now lets run a burn-in.  We will make a new chain to be filled
+   size_t burn_per_walker=200;
+   struct mca_chain *burn_chain=mca_chain_new(nwalkers,burn_per_walker,npars);
+
+   // Run the mcmc and fill the chain.  The value of a controls the acceptance
+   // rate.  a=2 gives about .5 and a=4 gives lower, maybe .3-.4
+   // the lnprob function takes (pars, npars, userdata) as inputs
+
+   double a=2;
+   mca_run(burnin_chain, a, start_chain, &lnprob, &mydata);
+
+   // now a production run.  We can feed the burn chain as the new starting
+   // point
+
+   size_t steps_per_walker=200;
+   struct mca_chain *chain=mca_chain_new(nwalkers,steps_per_walker,npars);
+   mca_run(chain, a, burnin_chain, &lnprob, &mydata);
+
+   // now extract some statistics
+   struct mca_stats *stats=mca_chain_stats(chain);
+
+   // print to a stream, can be stdout/stderr or an opened file object
+   mca_stats_write_brief(stats,stdout);
+
+   double mean_par2 = MCA_STATS_MEAN(stats,2);
+   double err_par2 = sqrt(MCA_STATS_COV(stats,2,2))
+
+   // This will give a machine readable printout to the FILE* object
+   // here just using stdout
+   mca_stats_write(stats,stdout);
+
+   // can also write to filename
+   mca_chain_write_file(chain, filename);
+
+   // read a chain
+   struct mca_chain *chain=mca_chain_read(filename);
+
+   // clean up
+   guesses=mca_chain_free(guesses);
+   burn_chain=mca_chain_free(burn_chain);
+   chain=mca_chain_free(chain);
+   stats=mca_stats_free(stats);
+
 
     Copyright (C) 2012  Erin Sheldon
 
@@ -12,537 +80,331 @@
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
+
 */
+#ifndef _MCA_HEADER_GUARD
+#define _MCA_HEADER_GUARD
+
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
-#include <string.h>
-#include "randn.h"
-#include "mca.h"
+#include <float.h>
+
+//#define MCA_LOW_VAL (-DBL_MAX+1000)
+#define MCA_LOW_VAL (-9999.e9)
+
+/*
+   The main structure for mcmc chains.
+*/
+
+struct mca_chain {
+    size_t nwalkers;
+    size_t steps_per_walker;
+    size_t npars;
+
+    // indexed by (iwalker,istep,ipar)
+    //    npars*steps_per_walker*iwalker + npars*istep + ipar
+    // where istep is in [0,steps_per_walker)
+    // or ignoring walkers by (istep,ipar)
+    //    npars*istep + ipar
+    // where istep is in [0,nwalkers*nsteps_per_walker)
+
+    double *pars;
+
+    // index by (iwalker,istep)
+    //   steps_per_walker*iwalker + istep
+    // or ignoring walkers by (istep)
+    double *lnprob;
+
+    int *accept;
+};
+
+#define MCA_CHAIN(mca) (mca)->chain
+
+#define MCA_CHAIN_NPARS(chain)  (chain)->npars
+#define MCA_CHAIN_NWALKERS(chain)  (chain)->nwalkers
+#define MCA_CHAIN_NSTEPS(chain)  \
+    (chain)->steps_per_walker*(chain)->nwalkers
+#define MCA_CHAIN_WNSTEPS(chain)  (chain)->steps_per_walker
+
+
+#define MCA_CHAIN_WPAR(chain, iwalker, istep, ipar)    \
+    (chain)->pars[                                             \
+        (chain)->npars*(chain)->steps_per_walker*(iwalker)       \
+      + (chain)->npars*(istep)                                   \
+      + (ipar)                                                   \
+    ]
+#define MCA_CHAIN_WPARS(chain, iwalker, istep)           \
+    &(chain)->pars[                                              \
+        (chain)->npars*(chain)->steps_per_walker*(iwalker)       \
+      + (chain)->npars*(istep)                                   \
+    ]
+
+#define MCA_CHAIN_PAR(mca, istep, ipar)    \
+    (chain)->pars[ (chain)->npars*(istep)  + (ipar) ]
+#define MCA_CHAIN_PARS(mca, istep)    \
+    &(chain)->pars[ (chain)->npars*(istep) ]
+
+
+#define MCA_CHAIN_WLNPROB(chain, iwalker, istep)        \
+    (chain)->lnprob[                               \
+        (chain)->steps_per_walker*(iwalker)          \
+      + (istep)                                           \
+    ]
+#define MCA_CHAIN_LNPROB(chain, istep)    \
+    (chain)->lnprob[(istep)]
+
+#define MCA_CHAIN_WACCEPT(chain, iwalker, istep)        \
+    (chain)->accept[                               \
+        (chain)->steps_per_walker*(iwalker)          \
+      + (istep)                                           \
+    ]
+#define MCA_CHAIN_ACCEPT(chain, istep)    \
+    (chain)->accept[(istep)]
+
+
 
 struct mca_chain *mca_chain_new(size_t nwalkers,
                                 size_t steps_per_walker,
-                                size_t npars)
-{
-    struct mca_chain *self=calloc(1,sizeof(struct mca_chain));
-    if (self==NULL) {
-        fprintf(stderr,"Could not allocate struct mca_chain\n");
-        exit(EXIT_FAILURE);
-    }
+                                size_t npars);
+struct mca_chain *mca_chain_free(struct mca_chain *self);
 
-    self->pars=calloc(nwalkers*steps_per_walker*npars,sizeof(double));
-    if (self->pars==NULL) {
-        fprintf(stderr,"Could not allocate mca_chain pars\n");
-        exit(EXIT_FAILURE);
-    }
-    self->lnprob=calloc(nwalkers*steps_per_walker,sizeof(double));
-    if (self->pars==NULL) {
-        fprintf(stderr,"Could not allocate mca_chain lnprob\n");
-        exit(EXIT_FAILURE);
-    }
-    self->accept=calloc(nwalkers*steps_per_walker,sizeof(int));
-    if (self->pars==NULL) {
-        fprintf(stderr,"Could not allocate mca_chain accept\n");
-        exit(EXIT_FAILURE);
-    }
+int mca_chain_write_file(const struct mca_chain *self, const char *fname);
+void mca_chain_write(const struct mca_chain *chain, FILE *stream);
+struct mca_chain *mca_chain_read(const char *fname);
 
-
-    self->nwalkers=nwalkers;
-    self->steps_per_walker=steps_per_walker;
-    self->npars=npars;
-
-    return self;
-
-}
-struct mca_chain *mca_chain_free(struct mca_chain *self)
-{
-    if (self) {
-        free(self->pars);
-        free(self->lnprob);
-        free(self->accept);
-        free(self);
-    }
-    return NULL;
-}
-
-int mca_chain_write_file(const struct mca_chain *self, const char *fname)
-{
-    FILE *fobj=fopen(fname,"w");
-    if (fobj==NULL) {
-        fprintf(stderr,"chain_writ error: Could not open file '%s'\n", fname);
-        return 0;
-    }
-
-    mca_chain_write(self, fobj);
-    fclose(fobj);
-
-    return 1;
-}
-void mca_chain_write(const struct mca_chain *chain, FILE *stream)
-{
-    size_t nwalkers=MCA_CHAIN_NWALKERS(chain);
-    size_t steps_per_walker=MCA_CHAIN_WNSTEPS(chain);
-    size_t npars=MCA_CHAIN_NPARS(chain);
-
-    size_t nsteps=nwalkers*steps_per_walker;
-
-    fprintf(stream,"%lu %lu %lu\n", nwalkers, steps_per_walker, npars);
-    for (size_t istep=0; istep<nsteps; istep++) {
-        fprintf(stream,"%d %.16g ", 
-                MCA_CHAIN_ACCEPT(chain,istep), 
-                MCA_CHAIN_LNPROB(chain,istep));
-        for (size_t ipar=0; ipar<npars; ipar++) {
-            fprintf(stream,"%.16g ", MCA_CHAIN_PAR(chain, istep, ipar));
-        }
-        fprintf(stream,"\n");
-    }
-}
-
-struct mca_chain *mca_chain_read(const char* fname)
-{
-    int status=1;
-    struct mca_chain *chain=NULL;
-    FILE *fptr=fopen(fname,"r");
-    if (fptr==NULL) {
-        fprintf(stderr,"chain_read error: Could not open file '%s'\n", fname);
-        return NULL;
-    }
-    int nread=0;
-
-    size_t nwalkers=0, steps_per_walker=0, npars=0;
-    nread=fscanf(fptr,"%lu %lu %lu",
-                 &nwalkers,&steps_per_walker,&npars);
-    if (nread!=3) {
-        fprintf(stderr,"Failed to read chain from %s",fname);
-        status=0;
-        goto _mca_chain_read_bail;
-    }
-
-    size_t nsteps_tot=nwalkers*steps_per_walker;
-    chain=mca_chain_new(nwalkers,steps_per_walker,npars);
-
-    for (size_t istep=0; istep<nsteps_tot; istep++) {
-        nread=fscanf(
-                fptr,
-                "%d %lf", 
-                &MCA_CHAIN_ACCEPT(chain,istep), 
-                &MCA_CHAIN_LNPROB(chain,istep));
-        if (nread != 2) {
-            fprintf(stderr,"Failed to read chain from %s",fname);
-            status=0;
-            goto _mca_chain_read_bail;
-        }
-
-        nread=0;
-        for (size_t ipar=0; ipar<npars; ipar++) {
-            nread+=fscanf(fptr,"%lf", &MCA_CHAIN_PAR(chain, istep, ipar));
-        }
-        if (nread!=npars) {
-            fprintf(stderr,"Failed to read chain from %s",fname);
-            status=0;
-            goto _mca_chain_read_bail;
-        }
-    }
-_mca_chain_read_bail:
-    if (status != 1) {
-        // chain is null
-        chain=mca_chain_free(chain);
-    }
-    fclose(fptr);
-
-    return chain;
-}
-
-
-void mca_chain_plot(const struct mca_chain *self, const char *options)
-{
-    char cmd[256];
-    char *name= tempnam(NULL,NULL);
-
-    printf("writing temporary chain to: %s\n", name);
-
-    FILE *fobj=fopen(name,"w");
-    mca_chain_write(self, fobj);
-    fclose(fobj);
-
-    sprintf(cmd,"mca-plot %s %s", options, name);
-    printf("%s\n",cmd);
-    int ret=system(cmd);
-
-    sprintf(cmd,"rm %s", name);
-    printf("%s\n",cmd);
-    ret=system(cmd);
-    printf("ret: %d\n", ret);
-
-    free(name);
-
-}
+void mca_chain_plot(const struct mca_chain *self, const char *options);
 
 struct mca_chain *mca_make_guess(double *centers, 
                                  double *widths,
                                  size_t npars, 
-                                 size_t nwalkers)
-{
-    struct mca_chain *chain=mca_chain_new(nwalkers,1,npars);
+                                 size_t nwalkers);
 
-    for (size_t ipar=0; ipar<npars; ipar++) {
-
-        double center=centers[ipar];
-        double width=widths[ipar];
-
-        for (size_t iwalk=0; iwalk<nwalkers; iwalk++) {
-            double val = center + width*(randu()-0.5)*2;
-            MCA_CHAIN_WPAR(chain, iwalk, 0, ipar) = val; 
-        }
-    }
-
-    return chain;
-}
-
-
-struct mca_stats *mca_stats_new(size_t npars)
-{
-    struct mca_stats *self=calloc(1,sizeof(struct mca_stats));
-    if (self==NULL) {
-        fprintf(stderr,"Could not allocate struct mca_stats\n");
-        exit(EXIT_FAILURE);
-    }
-
-    self->mean = calloc(npars, sizeof(double));
-    if (self->mean == NULL) {
-        fprintf(stderr,"Could not allocate mca_stats mean array\n");
-        exit(EXIT_FAILURE);
-    }
-    self->cov = calloc(npars*npars, sizeof(double));
-    if (self->cov == NULL) {
-        fprintf(stderr,"Could not allocate mca_stats cov array\n");
-        exit(EXIT_FAILURE);
-    }
-
-    self->npars=npars;
-    return self;
-}
-
-struct mca_stats *mca_stats_free(struct mca_stats *self)
-{
-    if (self) {
-        free(self->mean);
-        free(self->cov);
-        free(self);
-    }
-    return NULL;
-}
-
-struct mca_stats *mca_chain_stats(const struct mca_chain *chain)
-{
-    size_t npars = MCA_CHAIN_NPARS(chain);
-    struct mca_stats *self=mca_stats_new(npars);
-
-    if (!mca_chain_stats_fill(self,chain)) {
-        self=mca_stats_free(self);
-    }
-    return self;
-}
-
-void mca_stats_clear(struct mca_stats *self)
-{
-    if (!self)
-        return;
-
-    memset(self->mean, 0, self->npars*sizeof(double));
-    memset(self->cov, 0, self->npars*self->npars*sizeof(double));
-    self->arate=0;
-
-}
-int mca_chain_stats_fill(
-        struct mca_stats *self,
-        const struct mca_chain *chain)
-{
-    size_t npars = MCA_CHAIN_NPARS(chain);
-    size_t nsteps = MCA_CHAIN_NSTEPS(chain);
-    double ival=0, jval=0;
-
-    if (self->npars != npars) {
-        fprintf(stderr,"mca_chain_stats error: Expected "
-                       "npars %lu got %lu\n", npars, self->npars);
-        return 0;
-    }
-
-    mca_stats_clear(self);
-
-    double arate=0;
-    for (size_t istep=0; istep<nsteps; istep++) {
-
-        arate += MCA_CHAIN_ACCEPT(chain, istep);
-        for (size_t ipar=0; ipar<npars; ipar++) {
-
-            ival=MCA_CHAIN_PAR(chain,istep,ipar);
-            self->mean[ipar] += ival;
-
-            for (size_t jpar=ipar; jpar<npars; jpar++) {
-
-                if (ipar==jpar) {
-                    jval=ival;
-                } else {
-                    ival=MCA_CHAIN_PAR(chain,istep,jpar);
-                }
-
-                self->cov[ipar*npars + jpar] += ival*jval;
-            }
-
-        }
-    }
-
-    for (size_t ipar=0; ipar<npars; ipar++) {
-        self->mean[ipar] /= nsteps;
-    }
-
-    for (size_t ipar=0; ipar<npars; ipar++) {
-        double imean=self->mean[ipar];
-
-        for (size_t jpar=ipar; jpar<npars; jpar++) {
-            size_t index=ipar*npars + jpar;
-
-            double jmean=self->mean[jpar];
-
-            self->cov[index] /= nsteps;
-            self->cov[index] -= imean*jmean;
-
-            if (ipar!=jpar) {
-                self->cov[jpar*npars + ipar] = self->cov[index];
-            }
-        }
-    }
-
-    self->arate = arate/nsteps;
-    return 1;
-}
-
-void mca_stats_write_brief(struct mca_stats *self, FILE *stream)
-{
-    if (!self)
-        return;
-    size_t npars = MCA_STATS_NPARS(self);
-
-    fprintf(stream,"%.16g\n", MCA_STATS_ARATE(self));
-    for (size_t ipar=0; ipar< npars; ipar++) {
-        double mn=MCA_STATS_MEAN(self,ipar);
-        double var=MCA_STATS_COV(self,ipar,ipar);
-        double err=sqrt(var);
-        fprintf(stream,"%g +/- %g\n",mn,err);
-    }
-}
-
-void mca_stats_write(struct mca_stats *self, FILE *stream)
-{
-    if (!self)
-        return;
-    size_t npars = MCA_STATS_NPARS(self);
-
-    fprintf(stream,"%lu\n", npars);
-    fprintf(stream,"%.16g\n", MCA_STATS_ARATE(self));
-    for (size_t ipar=0; ipar< npars; ipar++) {
-        double mn=MCA_STATS_MEAN(self,ipar);
-        fprintf(stream,"%.16g ", mn);
-    }
-    fprintf(stream,"\n");
-    for (size_t ipar=0; ipar< npars; ipar++) {
-        for (size_t jpar=0; jpar< npars; jpar++) {
-            double cov=MCA_STATS_COV(self,ipar,jpar);
-            fprintf(stream,"%.16g ",cov);
-        }
-        fprintf(stream,"\n");
-    }
-}
-// write space separated, no new line at all
-void mca_stats_write_flat(struct mca_stats *self, FILE *stream)
-{
-    if (!self)
-        return;
-    size_t npars = MCA_STATS_NPARS(self);
-
-    fprintf(stream,"%lu ", npars);
-    fprintf(stream,"%.16g ", MCA_STATS_ARATE(self));
-    for (size_t ipar=0; ipar< npars; ipar++) {
-        double mn=MCA_STATS_MEAN(self,ipar);
-        fprintf(stream,"%.16g ", mn);
-    }
-    for (size_t ipar=0; ipar< npars; ipar++) {
-        for (size_t jpar=0; jpar< npars; jpar++) {
-            double cov=MCA_STATS_COV(self,ipar,jpar);
-            fprintf(stream,"%.16g ",cov);
-        }
-    }
-}
-
-static void copy_pars(const double *self, double *pars_dst, size_t npars)
-{
-    memcpy(pars_dst, self, npars*sizeof(double));
-}
-
-
- /* copy the last step in the start chain to the first step
-   in the chain */
-static void set_start(struct mca_chain *chain,
-                      const struct mca_chain *start,
-                      double (*lnprob)(const double *, size_t, const void *),
-                      const void *userdata)
-{
-    size_t steps_per=MCA_CHAIN_WNSTEPS(start);
-    size_t nwalkers=MCA_CHAIN_NWALKERS(start);
-    size_t npars=MCA_CHAIN_NPARS(start);
-
-    for (size_t iwalker=0; iwalker<nwalkers; iwalker++) {
-        MCA_CHAIN_WACCEPT(chain,iwalker,0) = 1;
-
-        double *pars_start = MCA_CHAIN_WPARS(start, iwalker, (steps_per-1));
-        double *pars = MCA_CHAIN_WPARS(chain, iwalker, 0);
-
-        copy_pars(pars_start, pars, npars);
-
-        MCA_CHAIN_WLNPROB(chain,iwalker,0) = (*lnprob)(pars,npars,userdata);
-    }
-}
-
-static int mca_accept(double lnprob_old,
-                      double lnprob_new,
-                      int npars, 
-                      double z)
-{
-    double lnprob_diff = (npars - 1.)*log(z) + lnprob_new - lnprob_old;
-    double r = randu();
-
-    if (lnprob_diff > log(r)) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
- 
-
-static void mca_stretch_move(double a, 
-                             double z,
-                             const double *pars, 
-                             const double *comp_pars, 
-                             size_t ndim,
-                             double *newpars)
-{
-    for (size_t i=0; i<ndim; i++) {
-
-        double val=pars[i];
-        double cval=comp_pars[i];
-
-        //newpars[i] = cval + z*(val-cval); 
-        newpars[i] = cval - z*(cval-val); 
-    }
-}
 
 /*
+   stats calculated from mca_chain s
+*/
+struct mca_stats {
+    size_t npars;
 
-   get a random long index in [0,n) from the *complement* of the input
-   current value, i.e. such that index!=current
+    double arate;
+
+    double *mean;
+
+    /* [i,j] -> npar*i + j */
+    double *cov;
+};
+
+
+#define MCA_STATS_NPARS(stats) (stats)->npars
+#define MCA_STATS_ARATE(stats) (stats)->arate
+
+#define MCA_STATS_MEAN(stats, i) ({                                           \
+    double _mn=-MCA_LOW_VAL;                                                  \
+    if ((i) >= (stats)->npars) {                                              \
+        fprintf(stderr,                                                       \
+            "stats error: mean index %lu out of bounds [0,%lu)\n",            \
+                        (size_t)(i), (stats)->npars);                                 \
+        fprintf(stderr,"returning %.16g\n", _mn);                             \
+    } else {                                                                  \
+        _mn = (stats)->mean[(i)];                                             \
+    }                                                                         \
+    _mn;                                                                      \
+})
+
+#define MCA_STATS_COV(stats, i, j) ({                                         \
+    double _cov=-MCA_LOW_VAL;                                                 \
+    if ((i) >= (stats)->npars || (j) >= (stats)->npars) {                     \
+        fprintf(stderr,                                                       \
+            "stats error: cov index (%lu,%lu) out of bounds [0,%lu)\n",       \
+            (size_t)(i), (size_t)(j),(stats)->npars);             \
+        fprintf(stderr,"returning %.16g\n", _cov);                            \
+    } else {                                                                  \
+        _cov= (stats)->cov[(i)*(stats)->npars + (j)];                         \
+    }                                                                         \
+    _cov;                                                                     \
+})
+
+
+
+
+struct mca_stats *mca_stats_new(size_t npar);
+struct mca_stats *mca_stats_free(struct mca_stats *self);
+
+/*
+   Calculate means of each parameter and full covariance matrix
+*/
+
+struct mca_stats *mca_chain_stats(const struct mca_chain *chain);
+// return 0 on failure, 1 otherwise
+int mca_chain_stats_fill(
+        struct mca_stats *self,
+        const struct mca_chain *chain);
+
+void mca_stats_clear(struct mca_stats *self);
+
+/* 
+   mca_stats_write_brief
+
+     acceptance_rate
+     mean1 +/- err1
+     mean2 +/- err2
+     ...
+
+   This is for human viewing.
+*/
+void mca_stats_write_brief(struct mca_stats *self, FILE *stream);
+
+/* 
+   mca_stats_write
+
+   A full printout with cov in matrix form
+
+   npar
+   acceptance_rate
+   mean1 mean2 mean3 ....
+   cov11 cov12 cov13 ....
+   cov21 cov22 cov23 ....
+   cov31 cov32 cov33 ....
 
 */
 
-unsigned int mca_rand_complement(unsigned int current, unsigned int n)
-{
-    unsigned int i=current;
-    while (i == current) {
-        i = genrand_uint32_max(n);
-    }
-    return i;
-}
+void mca_stats_write(struct mca_stats *self, FILE *stream);
 
-static void step_walker(struct mca_chain *chain,
-                        double a,
-                        double (*lnprob)(const double *, size_t, const void *),
-                        const void *userdata,
-                        size_t istep, size_t iwalker)
-{
-    size_t npars=MCA_CHAIN_NPARS(chain);
-    size_t nwalkers=MCA_CHAIN_NWALKERS(chain);
-    size_t prev_step=istep-1;
+/*
+   npar acceptrate mean1 mean2 .... cov11 cov12... cov21 cov22... cov31..
+*/
+void mca_stats_write_flat(struct mca_stats *self, FILE *stream);
 
-    const double *pars_old  = MCA_CHAIN_WPARS(chain,iwalker,prev_step);
-    double lnprob_old = MCA_CHAIN_WLNPROB(chain,iwalker,prev_step);
+/*
 
-    double *pars_new=MCA_CHAIN_WPARS(chain,iwalker,istep);
+   mca_run
 
-    long cwalker=mca_rand_complement(iwalker,nwalkers);
-    const double *cpars=MCA_CHAIN_WPARS(chain,cwalker,prev_step);
+   Fill the chain with MCMC steps.
 
-    // this over-writes our chain at this step
-    double z = mca_rand_gofz(a);
-    mca_stretch_move(a, z, pars_old, cpars, npars, pars_new);
+   The *last* set of walkers in the "start" chain will be the starting point
+   for the chain.  This way you can feed a start as a single chain, e.g.  from
+   mca_make_guess() or the chain from a previous burn-in run.
 
-    double lnprob_new = (*lnprob)(pars_new,npars,userdata);
+   parameters
+   ----------
+   chain mca_chain
+     The chain to be filled.  It's size determines the number
+     of steps.
+   a  double
+     The scale for the g(z) random number function.  a=2 gives acceptance rate
+     ~.5.  2.5 about 0.4 and 4 around .25
+   start mca_chain
+     To be used as the starting point.  When starting burn-in, get
+     this by calling mca_make_guess().  For a post-burn run just
+     send the chain from the burn-in run.
+   lnprob_func function pointer
+     The function to call for lnprob
+   userdata void*
+     Either NULL or some data for use by the lnprob func.  The
+     user must cast it to the right type.
 
-    int accept = mca_accept(lnprob_old, lnprob_new, npars, z);
-    MCA_CHAIN_WACCEPT(chain,iwalker,istep) = accept;
+   Procedure
+   ---------
 
-    if (accept) {
-        // we already set pars_new above
-        MCA_CHAIN_WLNPROB(chain,iwalker,istep) = lnprob_new;
-    } else {
-        // copy the older pars over what we put in above
-        copy_pars(pars_old, pars_new, npars);
-        MCA_CHAIN_WLNPROB(chain,iwalker,istep) = lnprob_old;
-    }
-}
+   loop over steps
+     loop over walkers
+       choose a random walker from the complement
+       make a stretch move
+       if accept
+           copy new pars
+       else 
+           copy old pars
+*/
 
 void mca_run(struct mca_chain *chain,
              double a,
              const struct mca_chain *start,
              double (*lnprob)(const double *, size_t, const void *),
-             const void *userdata)
-{
-    size_t nwalkers=MCA_CHAIN_NWALKERS(chain);
-    size_t steps_per_walker=MCA_CHAIN_WNSTEPS(chain);
+             const void *userdata);
 
-    set_start(chain, start, lnprob, userdata);
+/* copy the last step in the start chain to the first step
+   in the chain */
 
-    for (size_t istep=1; istep<steps_per_walker; istep++) {
-        for (size_t iwalker=0; iwalker<nwalkers; iwalker++) {
-            step_walker(chain,a,lnprob,userdata,istep,iwalker);
-        }
-    }
-
-}
-
-
-                
-
-
-double mca_rand_gofz(double a)
-{
-    // ( (a-1) rand + 1 )^2 / a;
-
-    double z = (a - 1.)*randu() + 1.;
-
-    z = z*z/a;
-
-    return z;
-}
+//void mca_set_start(struct mca_chain *chain,
+//                   const struct mca_chain *start);
 
 /*
-   Generate normal random numbers.
+   make a stretch move
+
+   comp_pars are from a randomly drawn walker from the set complement of the
+   current walker.
+
+   newpar = comp_par + z*(par-comp_par)
+
+   where z is drawn from the mca_rand_gofz, which is
+        1/sqrt(z) in the range [1/a,a]
+
+   Note this is a *vectoral* move; z is a scalar in that vectoral equation.
+
+   On return the value of z is set and the newpars are filled in.
+
+*/
+/*
+void mca_stretch_move(double a, double z,
+                      const double *pars, 
+                      const double *comp_pars, 
+                      size_t ndim,
+                      double *newpars);
+*/
+/*
+   Determine of a stretch move should be accepted
+
+   Returns 1 if yes 0 if no
+*/
+/*
+int mca_accept(int ndim,
+               double lnprob_old,
+               double lnprob_new,
+               double z);
+*/
+/*
+   copy the parameters
+*/
+//void mca_copy_pars(const double *self, double *pars_dst, size_t npars);
+
+/* 
+   generate random integers in [0,n)
+
+   Don't forget to seed srand48!
+ */
+long mca_rand_long(long n);
+
+/*
+
+   get a random unsigned index in [0,n) from the *complement* of the input
+   current value, i.e. such that index!=current
+
+*/
+unsigned int mca_rand_complement(unsigned int current, unsigned int n);
+
+/*
+   generate random numbers 
+       {
+       { 1/sqrt(z) if z in (1/a,a)
+       {     0     otherwise
+       {
+
+   When used in the affine invariant mcmc, a value
+   of a=2 gives about 50% acceptance rate
+ */
+double mca_rand_gofz(double a);
+
+
+/*
+
+   Generate gaussian random numbers with variance 1 and mean 0.  This is not
+   used by the affine invariant sampler, but will probably be useful for test
+   programs that generate random data.
 
    Note we get two per run but I'm only using one.
 */
+double mca_randn();
 
-double mca_randn() 
-{
-    double x1, x2, w, y1;//, y2;
- 
-    do {
-        x1 = 2.*randu() - 1.0;
-        x2 = 2.*randu() - 1.0;
-        w = x1*x1 + x2*x2;
-    } while ( w >= 1.0 );
 
-    w = sqrt( (-2.*log( w ) ) / w );
-    y1 = x1*w;
-    //y2 = x2*w;
-    return y1;
-}
-
+#endif
