@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "../randn.h"
-#include "../mca.h"
+#include "randn.h"
+#include "mca.h"
 
 
 int main(int argc, char **argv)

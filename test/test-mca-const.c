@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
-#include "../mca.h"
+#include "mca.h"
 
 struct mydata {
     size_t ndata;
