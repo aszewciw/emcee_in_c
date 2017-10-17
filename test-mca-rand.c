@@ -10,7 +10,8 @@ int main(int argc, char **argv)
     unsigned int nmax=100;
     double a=2;
 
-    randn_seed();
+    // randn_seed();
+    randn_seed_devurand();
 
     if (argc > 1) {
         ntrial=atol(argv[1]);
@@ -21,7 +22,8 @@ int main(int argc, char **argv)
     printf("testing mca_rand_long with %ld trials\n", ntrial);
     // first test the basic random number generator
     for (size_t i=0; i<ntrial; i++) {
-        unsigned int r = rand_uint_max(nmax);
+        // unsigned int r = rand_uint_max(nmax);
+        unsigned int r = genrand_uint32_max(nmax);
         if (r < 0 || r >= nmax) {
             fprintf(stderr,
                     "Error, found rand %u outside of range: [0,%u)\n", r, nmax);
