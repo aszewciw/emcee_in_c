@@ -7,10 +7,10 @@ LFLAGS=-lm
 #################################### compile ###################################
 all: mca-const mca-rand
 
-mca-const: test-mca-const.o mca.o rand.o
+mca-const: test-mca-const.o mca.o randn.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS)
 
-mca-rand: test-mca-rand.o mca.o rand.o
+mca-rand: test-mca-rand.o mca.o randn.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LFLAGS)
 
 clean:
