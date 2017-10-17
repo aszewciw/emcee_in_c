@@ -2,8 +2,8 @@
 
 INC_DIR=../
 CC=gcc
-CFLAGS=-std=gnu99 -Wall -Werror -O2 -I$(INC_DIR)
-LFLAGS=-lm -I$(INC_DIR)
+CFLAGS=-std=gnu99 -Wall -Werror -O2 -I $(INC_DIR)
+LFLAGS=-lm
 
 #################################### compile ###################################
 all: test-mca-const test-mca-rand
