@@ -1,8 +1,8 @@
 
 
-INC_DIR=../
+INC_DIR=..
 CC=gcc
-CFLAGS=-std=gnu99 -Wall -Werror -O2 -I $(INC_DIR)
+CFLAGS=-std=gnu99 -Wall -Werror -O2 -I$(INC_DIR)
 LFLAGS=-lm
 
 #################################### compile ###################################
