@@ -612,13 +612,14 @@ void mca_run(struct mca_chain *chain,
     size_t npars=MCA_CHAIN_NPARS(chain);
 
     size_t nwalkers_over_two=nwalkers/2;
-    fprintf(stderr, "nwalkers over two is %lu\n", nwalkers_over_two);
     struct mca_chain *sub_chain1=mca_chain_new(nwalkers_over_two,1,npars);
     struct mca_chain *sub_chain2=mca_chain_new(nwalkers_over_two,1,npars);
 
+    fprintf(stderr, "Sub chains initialized\n");
     set_start(chain, start, lnprob, userdata);
     chain_to_subchains(chain, sub_chain1, sub_chain2, 0);
 
+    fprintf(stderr, "Sub-chains copied to main chain\n");
     for (size_t istep=1; istep<steps_per_walker; istep++) {
         for (size_t iwalker=0; iwalker<nwalkers; iwalker++) {
             step_walker(sub_chain1,sub_chain2,a,lnprob,userdata,istep,iwalker);
