@@ -612,7 +612,7 @@ void mca_run(struct mca_chain *chain,
     size_t npars=MCA_CHAIN_NPARS(chain);
 
     size_t nwalkers_over_two=nwalkers/2;
-    fprintf(stderr, "nwalkers over two is %d\n", nwalkers_over_two);
+    fprintf(stderr, "nwalkers over two is %lu\n", nwalkers_over_two);
     struct mca_chain *sub_chain1=mca_chain_new(nwalkers_over_two,1,npars);
     struct mca_chain *sub_chain2=mca_chain_new(nwalkers_over_two,1,npars);
 
