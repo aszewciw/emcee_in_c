@@ -78,6 +78,7 @@ int main(int argc, char **argv)
     mydata.ivar = 1/(err*err);
 
     struct mca_chain *burnin_chain=mca_chain_new(nwalkers,burn_per_walker,npars);
+    fprintf(stderr, "Burn in initialized\n");
     mca_run(burnin_chain, a, guesses, &lnprob, &mydata);
     fprintf(stderr, "Burn in completed\n");
 
