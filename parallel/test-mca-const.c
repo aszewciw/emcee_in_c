@@ -79,6 +79,7 @@ int main(int argc, char **argv)
 
     struct mca_chain *burnin_chain=mca_chain_new(nwalkers,burn_per_walker,npars);
     mca_run(burnin_chain, a, guesses, &lnprob, &mydata);
+    fprintf(stderr, "Burn in completed\n");
 
     struct mca_chain *chain=mca_chain_new(nwalkers,steps_per_walker,npars);
     mca_run(chain, a, burnin_chain, &lnprob, &mydata);
