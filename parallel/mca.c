@@ -624,8 +624,8 @@ void mca_run(struct mca_chain *chain,
         for (size_t iwalker=0; iwalker<nwalkers; iwalker++) {
             step_walker(sub_chain1,sub_chain2,a,lnprob,userdata,istep,iwalker);
             step_walker(sub_chain2,sub_chain1,a,lnprob,userdata,istep,iwalker);
-            subchains_to_chain(chain, sub_chain1, sub_chain2, istep);
         }
+        subchains_to_chain(chain, sub_chain1, sub_chain2, istep);
     }
     mca_chain_free(sub_chain1);
     mca_chain_free(sub_chain2);
