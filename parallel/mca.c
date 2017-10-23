@@ -88,8 +88,8 @@ void mca_chain_write(const struct mca_chain *chain, FILE *stream)
 
     fprintf(stream,"%lu %lu %lu\n", nwalkers, steps_per_walker, npars);
     for (size_t istep=0; istep<nsteps; istep++) {
-        fprintf(stream,"%d %.16g ", 
-                MCA_CHAIN_ACCEPT(chain,istep), 
+        fprintf(stream,"%d %.16g ",
+                MCA_CHAIN_ACCEPT(chain,istep),
                 MCA_CHAIN_LNPROB(chain,istep));
         for (size_t ipar=0; ipar<npars; ipar++) {
             fprintf(stream,"%.16g ", MCA_CHAIN_PAR(chain, istep, ipar));
@@ -124,8 +124,8 @@ struct mca_chain *mca_chain_read(const char* fname)
     for (size_t istep=0; istep<nsteps_tot; istep++) {
         nread=fscanf(
                 fptr,
-                "%d %lf", 
-                &MCA_CHAIN_ACCEPT(chain,istep), 
+                "%d %lf",
+                &MCA_CHAIN_ACCEPT(chain,istep),
                 &MCA_CHAIN_LNPROB(chain,istep));
         if (nread != 2) {
             fprintf(stderr,"Failed to read chain from %s",fname);
@@ -159,6 +159,7 @@ void mca_chain_plot(const struct mca_chain *self, const char *options)
     char cmd[256];
     char *name= tempnam(NULL,NULL);
 
+
     printf("writing temporary chain to: %s\n", name);
 
     FILE *fobj=fopen(name,"w");
@@ -178,9 +179,9 @@ void mca_chain_plot(const struct mca_chain *self, const char *options)
 
 }
 
-struct mca_chain *mca_make_guess(double *centers, 
+struct mca_chain *mca_make_guess(double *centers,
                                  double *widths,
-                                 size_t npars, 
+                                 size_t npars,
                                  size_t nwalkers)
 {
     struct mca_chain *chain=mca_chain_new(nwalkers,1,npars);
@@ -192,7 +193,7 @@ struct mca_chain *mca_make_guess(double *centers,
 
         for (size_t iwalk=0; iwalk<nwalkers; iwalk++) {
             double val = center + width*(randu()-0.5)*2;
-            MCA_CHAIN_WPAR(chain, iwalk, 0, ipar) = val; 
+            MCA_CHAIN_WPAR(chain, iwalk, 0, ipar) = val;
         }
     }
 
@@ -406,7 +407,7 @@ static void set_start(struct mca_chain *chain,
 
 static int mca_accept(double lnprob_old,
                       double lnprob_new,
-                      int npars, 
+                      int npars,
                       double z)
 {
     double lnprob_diff = (npars - 1.)*log(z) + lnprob_new - lnprob_old;
@@ -418,22 +419,21 @@ static int mca_accept(double lnprob_old,
         return 0;
     }
 }
- 
 
-static void mca_stretch_move(double a, 
-                             double z,
-                             const double *pars, 
-                             const double *comp_pars, 
+
+static void mca_stretch_move(double z,
                              size_t ndim,
-                             double *newpars)
+                             double *pars_old,
+                             const double *pars_comp,
+                             double *pars_new)
 {
     for (size_t i=0; i<ndim; i++) {
 
-        double val=pars[i];
-        double cval=comp_pars[i];
+        double val=pars_old[i];
+        double cval=pars_comp[i];
 
-        //newpars[i] = cval + z*(val-cval); 
-        newpars[i] = cval - z*(cval-val); 
+        //newpars[i] = cval + z*(val-cval);
+        pars_new[i] = cval - z*(cval-val);
     }
 }
 
@@ -444,15 +444,16 @@ static void mca_stretch_move(double a,
 
 */
 
-unsigned int mca_rand_complement(unsigned int current, unsigned int n)
+unsigned int mca_rand_complement(unsigned int n)
 {
-    unsigned int i=current;
-    while (i == current) {
-        i = genrand_uint32_max(n);
-    }
+    // unsigned int i=current;
+    // while (i == current) {
+    //     i = genrand_uint32_max(n);
+    // }
+    unsigned int i=genrand_uint32_max(n);
     return i;
 }
-
+/*
 static void step_walker(struct mca_chain *chain,
                         double a,
                         double (*lnprob)(const double *, size_t, const void *),
@@ -463,7 +464,7 @@ static void step_walker(struct mca_chain *chain,
     size_t nwalkers=MCA_CHAIN_NWALKERS(chain);
     size_t prev_step=istep-1;
 
-    const double *pars_old  = MCA_CHAIN_WPARS(chain,iwalker,prev_step);
+    const double *pars_old = MCA_CHAIN_WPARS(chain,iwalker,prev_step);
     double lnprob_old = MCA_CHAIN_WLNPROB(chain,iwalker,prev_step);
 
     double *pars_new=MCA_CHAIN_WPARS(chain,iwalker,istep);
@@ -489,7 +490,47 @@ static void step_walker(struct mca_chain *chain,
         MCA_CHAIN_WLNPROB(chain,iwalker,istep) = lnprob_old;
     }
 }
+*/
+static void step_walker(struct mca_chain *chain,
+                        struct mca_chain *comp_chain,
+                        double a,
+                        double (*lnprob)(const double *, size_t, const void *),
+                        const void *userdata,
+                        size_t istep, size_t iwalker)
+{
+    size_t npars=MCA_CHAIN_NPARS(chain);
+    size_t nwalkers=MCA_CHAIN_NWALKERS(chain);
+    double pars_old[npars];
+    double pars_new[npars];
+    for(int ipar=0;ipar<npars;ipar++){
+        pars_old[ipar] = MCA_CHAIN_WPAR(chain,iwalker,0,ipar);
+    }
 
+    double lnprob_old = MCA_CHAIN_WLNPROB(chain,iwalker,0);
+
+    long cwalker=mca_rand_complement(nwalkers);
+    const double *cpars=MCA_CHAIN_WPARS(comp_chain,cwalker,0);
+
+    double z = mca_rand_gofz(a);
+
+    mca_stretch_move(z, npars, pars_old, cpars, pars_new);
+
+    double lnprob_new = (*lnprob)(pars_new,npars,userdata);
+
+    int accept = mca_accept(lnprob_old, lnprob_new, npars, z);
+    MCA_CHAIN_WACCEPT(chain,iwalker,0) = accept;
+
+    if (accept) {
+        for(int ipar=0;ipar<npars;ipar++){
+            MCA_CHAIN_WPAR(chain,iwalker,0,ipar) = pars_new[ipar];
+        }
+        MCA_CHAIN_WLNPROB(chain,iwalker,0) = lnprob_new;
+    } else {
+        MCA_CHAIN_WLNPROB(chain,iwalker,0) = lnprob_old;
+    }
+}
+
+/*
 void mca_run(struct mca_chain *chain,
              double a,
              const struct mca_chain *start,
@@ -508,9 +549,85 @@ void mca_run(struct mca_chain *chain,
     }
 
 }
+*/
 
+void chain_to_subchains(struct mca_chain *chain,
+                        struct mca_chain *sub_chain1,
+                        struct mca_chain *sub_chain2,
+                        size_t istep)
+{
+    size_t npars=MCA_CHAIN_NPARS(chain);
+    // size_t steps_per=MCA_CHAIN_WNSTEPS(chain);
+    // size_t nwalkers=MCA_CHAIN_NWALKERS(chain);
+    size_t nwalkers_over_two=MCA_CHAIN_NWALKERS(sub_chain1);
 
-                
+    for (size_t iwalker=0; iwalker<nwalkers_over_two; iwalker++) {
+
+        size_t iwalker2=iwalker+nwalkers_over_two;
+
+        MCA_CHAIN_WACCEPT(sub_chain1,iwalker,0) = MCA_CHAIN_WACCEPT(chain,iwalker,istep);
+        MCA_CHAIN_WACCEPT(sub_chain2,iwalker,0) = MCA_CHAIN_WACCEPT(chain,iwalker2,istep);
+        MCA_CHAIN_WLNPROB(sub_chain1,iwalker,0) = MCA_CHAIN_WLNPROB(chain,iwalker,istep);
+        MCA_CHAIN_WLNPROB(sub_chain2,iwalker,0) = MCA_CHAIN_WLNPROB(chain,iwalker2,istep);
+        for (size_t ipar=0; ipar<npars; ipar++){
+            MCA_CHAIN_WPAR(sub_chain1,iwalker,0,ipar) = MCA_CHAIN_WPAR(chain,iwalker,istep,ipar);
+            MCA_CHAIN_WPAR(sub_chain2,iwalker,0,ipar) = MCA_CHAIN_WPAR(chain,iwalker2,istep,ipar);
+        }
+    }
+}
+
+void subchains_to_chain(struct mca_chain *chain,
+                        struct mca_chain *sub_chain1,
+                        struct mca_chain *sub_chain2,
+                        size_t istep)
+{
+    size_t npars=MCA_CHAIN_NPARS(chain);
+    // size_t steps_per=MCA_CHAIN_WNSTEPS(chain);
+    // size_t nwalkers=MCA_CHAIN_NWALKERS(chain);
+    size_t nwalkers_over_two=MCA_CHAIN_NWALKERS(sub_chain1);
+
+    for (size_t iwalker=0; iwalker<nwalkers_over_two; iwalker++) {
+
+        size_t iwalker2=iwalker+nwalkers_over_two;
+
+        MCA_CHAIN_WACCEPT(chain,iwalker,istep) = MCA_CHAIN_WACCEPT(sub_chain1,iwalker,0);
+        MCA_CHAIN_WACCEPT(chain,iwalker2,istep) = MCA_CHAIN_WACCEPT(sub_chain2,iwalker,0);
+        MCA_CHAIN_WLNPROB(chain,iwalker,istep) = MCA_CHAIN_WLNPROB(sub_chain1,iwalker,0);
+        MCA_CHAIN_WLNPROB(chain,iwalker2,istep) = MCA_CHAIN_WLNPROB(sub_chain2,iwalker,0);
+        for (size_t ipar=0; ipar<npars; ipar++){
+            MCA_CHAIN_WPAR(chain,iwalker,istep,ipar) = MCA_CHAIN_WPAR(sub_chain1,iwalker,0,ipar);
+            MCA_CHAIN_WPAR(chain,iwalker2,istep,ipar) = MCA_CHAIN_WPAR(sub_chain2,iwalker,0,ipar);
+        }
+    }
+}
+
+void mca_run(struct mca_chain *chain,
+             double a,
+             const struct mca_chain *start,
+             double (*lnprob)(const double *, size_t, const void *),
+             const void *userdata)
+{
+    size_t nwalkers=MCA_CHAIN_NWALKERS(chain);
+    size_t steps_per_walker=MCA_CHAIN_WNSTEPS(chain);
+    size_t npars=MCA_CHAIN_NPARS(chain);
+
+    size_t nwalkers_over_two=nwalkers/2;
+    struct mca_chain *sub_chain1=mca_chain_new(nwalkers_over_two,1,npars);
+    struct mca_chain *sub_chain2=mca_chain_new(nwalkers_over_two,1,npars);
+
+    set_start(chain, start, lnprob, userdata);
+    chain_to_subchains(chain, sub_chain1, sub_chain2, 0);
+
+    for (size_t istep=1; istep<steps_per_walker; istep++) {
+        for (size_t iwalker=0; iwalker<nwalkers; iwalker++) {
+            step_walker(sub_chain1,sub_chain2,a,lnprob,userdata,istep,iwalker);
+            step_walker(sub_chain2,sub_chain1,a,lnprob,userdata,istep,iwalker);
+            subchains_to_chain(chain, sub_chain1, sub_chain2, istep);
+        }
+    }
+    mca_chain_free(sub_chain1);
+    mca_chain_free(sub_chain2);
+}
 
 
 double mca_rand_gofz(double a)
@@ -530,10 +647,10 @@ double mca_rand_gofz(double a)
    Note we get two per run but I'm only using one.
 */
 
-double mca_randn() 
+double mca_randn()
 {
     double x1, x2, w, y1;//, y2;
- 
+
     do {
         x1 = 2.*randu() - 1.0;
         x2 = 2.*randu() - 1.0;

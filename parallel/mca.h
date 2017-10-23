@@ -317,6 +317,16 @@ void mca_stats_write_flat(struct mca_stats *self, FILE *stream);
            copy old pars
 */
 
+void chain_to_subchains(struct mca_chain *chain,
+                        struct mca_chain *sub_chain1,
+                        struct mca_chain *sub_chain2,
+                        size_t istep);
+
+void subchains_to_chain(struct mca_chain *chain,
+                        struct mca_chain *sub_chain1,
+                        struct mca_chain *sub_chain2,
+                        size_t istep);
+
 void mca_run(struct mca_chain *chain,
              double a,
              const struct mca_chain *start,
@@ -383,7 +393,9 @@ long mca_rand_long(long n);
    current value, i.e. such that index!=current
 
 */
-unsigned int mca_rand_complement(unsigned int current, unsigned int n);
+// unsigned int mca_rand_complement(unsigned int current, unsigned int n);
+unsigned int mca_rand_complement(unsigned int n);
+
 
 /*
    generate random numbers
