@@ -623,6 +623,7 @@ void mca_run(struct mca_chain *chain,
     for (size_t istep=1; istep<steps_per_walker; istep++) {
         for (size_t iwalker=0; iwalker<nwalkers; iwalker++) {
             step_walker(sub_chain1,sub_chain2,a,lnprob,userdata,istep,iwalker);
+            fprintf(stderr, "Stepped walker\n");
             step_walker(sub_chain2,sub_chain1,a,lnprob,userdata,istep,iwalker);
         }
         subchains_to_chain(chain, sub_chain1, sub_chain2, istep);
