@@ -18,7 +18,7 @@ typedef struct mca_chain {
   mca_step *steps;      // one "step" is the params for the ensemble of walkers
 } mca_chain;
 
-mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
+mca_chain* allocate_chain(int nwalkers, int nsteps, int npars){
   struct mca_chain *self=calloc(1,sizeof(mca_chain));
   if (self==NULL) {
       fprintf(stderr,"Could not allocate struct mca_chain\n");
@@ -54,7 +54,7 @@ mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
   self->steps_per_walker=nsteps;
   self->npars=npars;
 
-  return *self;
+  return self;
 }
 
 void free_chain(mca_chain *chain){
