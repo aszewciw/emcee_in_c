@@ -33,18 +33,18 @@ mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
 
   for(int i=0; i<nsteps; i++){
 
-    self[i]->pars=calloc(nwalkers*npars,sizeof(double));
-    if (self[i]->pars==NULL) {
+    self[i].pars=calloc(nwalkers*npars,sizeof(double));
+    if (self[i].pars==NULL) {
         fprintf(stderr,"Could not allocate mca_chain pars\n");
         exit(EXIT_FAILURE);
     }
-    self[i]->lnprob=calloc(nwalkers,sizeof(double));
-    if (self[i]->lnprob==NULL) {
+    self[i].lnprob=calloc(nwalkers,sizeof(double));
+    if (self[i].lnprob==NULL) {
         fprintf(stderr,"Could not allocate mca_chain lnprob\n");
         exit(EXIT_FAILURE);
     }
     self[i]->accept=calloc(nwalkers,sizeof(int));
-    if (self[i]->accept==NULL) {
+    if (self[i].accept==NULL) {
         fprintf(stderr,"Could not allocate mca_chain accept\n");
         exit(EXIT_FAILURE);
     }
