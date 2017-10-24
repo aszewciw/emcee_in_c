@@ -26,18 +26,18 @@ mca_step* allocate_step(int nwalkers, int npars){
       exit(EXIT_FAILURE);
   }
 
-  self.pars=calloc(nwalkers*npars,sizeof(double));
-  if (self.pars==NULL) {
+  self->pars=calloc(nwalkers*npars,sizeof(double));
+  if (self->pars==NULL) {
       fprintf(stderr,"Could not allocate step pars\n");
       exit(EXIT_FAILURE);
   }
-  self.lnprob=calloc(nwalkers,sizeof(double));
-  if (self.lnprob==NULL) {
+  self->lnprob=calloc(nwalkers,sizeof(double));
+  if (self->lnprob==NULL) {
       fprintf(stderr,"Could not allocate step lnprob\n");
       exit(EXIT_FAILURE);
   }
-  self.accept=calloc(nwalkers,sizeof(int));
-  if (self.accept==NULL) {
+  self->accept=calloc(nwalkers,sizeof(int));
+  if (self->accept==NULL) {
       fprintf(stderr,"Could not allocate step accept\n");
       exit(EXIT_FAILURE);
   }
@@ -96,9 +96,9 @@ void free_chain(mca_chain *chain){
 }
 
 void free_step(mca_step *step){
-  free(step.pars);
-  free(step.lnprob);
-  free(step.accept);
+  free(step->pars);
+  free(step->lnprob);
+  free(step->accept);
   free(step);
 }
 
@@ -154,7 +154,7 @@ int main( int argc, char ** argv )
   // }
 
   if (rank==0) free_chain(chain);
-  free_step(step)
+  free_step(step);
 
   MPI_Finalize();
   return 0;
