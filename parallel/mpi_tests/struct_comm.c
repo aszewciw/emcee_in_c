@@ -81,7 +81,7 @@ int main( int argc, char ** argv )
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
    int nwalkers=1000;
-   int nsteps=500000;
+   int nsteps=200;
    int npars=10;
 
    mca_chain *chain = allocate_chain(nwalkers,nsteps,npars);
