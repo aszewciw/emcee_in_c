@@ -152,9 +152,12 @@ int main( int argc, char ** argv )
   mca_step *step = allocate_step(nwalkers,npars);
 
   // have each chain fill its one step
-  // for(int i=lower_ind; i<upper_ind; i++){
-
-  // }
+  for(int i=lower_ind; i<upper_ind; i++){
+    step->accept[i] = rank;
+    step->lnprob[i] = rank*10.0;
+    for(int j=0; j<npars; j++){
+      step->pars[i+j] = double(rank+i+j);
+  }
 
   if (rank==0) {
     free_chain(chain);
