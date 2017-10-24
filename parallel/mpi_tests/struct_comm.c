@@ -58,11 +58,11 @@ mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
 }
 
 void free_chain(mca_chain *chain){
-  int nsteps=chain->nsteps;
+  int nsteps=chain->steps_per_walker;
   for(int i=0; i<nsteps; i++){
-    free(chain[i]->pars);
-    free(chain[i]->lnprob);
-    free(chain[i]->accept);
+    free(chain->steps[i].pars);
+    free(chain->steps[i].lnprob);
+    free(chain->steps[i].accept);
   }
   free(chain);
 }
