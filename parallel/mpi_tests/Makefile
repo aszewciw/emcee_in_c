@@ -7,5 +7,4 @@ struct_comm : struct_comm.c
 .PHONY: clean
 
 clean:
-	rm -f student
 	rm -f struct_comm
