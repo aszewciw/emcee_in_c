@@ -67,10 +67,10 @@ void free_chain(mca_chain *chain){
   free(chain);
 }
 
-void printStudent( student * student_x , int prank, int np )
-{
+// void printStudent( student * student_x , int prank, int np )
+// {
 
-}
+// }
 
 int main( int argc, char ** argv )
 {
