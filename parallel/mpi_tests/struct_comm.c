@@ -156,7 +156,7 @@ int main( int argc, char ** argv )
     step->accept[i] = rank;
     step->lnprob[i] = rank*10.0;
     for(int j=0; j<npars; j++){
-      step->pars[i+j] = double(rank+i+j);
+      step->pars[i+j] = (double)(rank+i+j);
   }
 
   if (rank==0) {
