@@ -54,7 +54,7 @@ mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
   self->steps_per_walker=nsteps;
   self->npars=npars;
 
-  return self;
+  return *self;
 }
 
 void free_chain(mca_chain *chain){
