@@ -139,8 +139,9 @@ int main( int argc, char ** argv )
   It might actually be good to leave one proc free for i/o and other meta tasks.
   For now, I'm not going to do this.
   */
+  mca_chain *chain;
   if (rank==0){
-    mca_chain *chain = allocate_chain(nwalkers,nsteps,npars);
+    chain = allocate_chain(nwalkers,nsteps,npars);
   }
 
   /*
@@ -156,7 +157,7 @@ int main( int argc, char ** argv )
   // }
 
   if (rank==0) {
-    free_chain(*chain);
+    free_chain(chain);
   }
   free_step(step);
 
