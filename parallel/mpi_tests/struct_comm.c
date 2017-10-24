@@ -18,6 +18,34 @@ typedef struct mca_chain {
   mca_step *steps;      // one "step" is the params for the ensemble of walkers
 } mca_chain;
 
+mca_step* allocate_step(int nwalkers, int npars){
+
+  struct mca_step *self=calloc(1,sizeof(mca_step));
+  if (self==NULL) {
+      fprintf(stderr,"Could not allocate step mca_step\n");
+      exit(EXIT_FAILURE);
+  }
+
+  self.pars=calloc(nwalkers*npars,sizeof(double));
+  if (self.pars==NULL) {
+      fprintf(stderr,"Could not allocate step pars\n");
+      exit(EXIT_FAILURE);
+  }
+  self.lnprob=calloc(nwalkers,sizeof(double));
+  if (self.lnprob==NULL) {
+      fprintf(stderr,"Could not allocate step lnprob\n");
+      exit(EXIT_FAILURE);
+  }
+  self.accept=calloc(nwalkers,sizeof(int));
+  if (self.accept==NULL) {
+      fprintf(stderr,"Could not allocate step accept\n");
+      exit(EXIT_FAILURE);
+  }
+
+  return self;
+}
+
+
 mca_chain* allocate_chain(int nwalkers, int nsteps, int npars){
   struct mca_chain *self=calloc(1,sizeof(mca_chain));
   if (self==NULL) {
@@ -67,6 +95,13 @@ void free_chain(mca_chain *chain){
   free(chain);
 }
 
+void free_step(mca_step *step){
+  free(step.pars);
+  free(step.lnprob);
+  free(step.accept);
+  free(step);
+}
+
 // void printStudent( student * student_x , int prank, int np )
 // {
 
@@ -74,18 +109,53 @@ void free_chain(mca_chain *chain){
 
 int main( int argc, char ** argv )
 {
-   int nprocs,rank;
+  int nprocs,rank;
 
-   MPI_Init(&argc,&argv);
-   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Init(&argc,&argv);
+  MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-   int nwalkers=1000;
-   int nsteps=200;
-   int npars=10;
+  int nwalkers=6;
+  int nsteps=5;
+  int npars=2;
 
-   mca_chain *chain = allocate_chain(nwalkers,nsteps,npars);
-   free_chain(chain);
-   MPI_Finalize();
-   return 0;
+  /* Establish slice of walkers for each process to handle */
+  int slice_length, lower_ind, upper_ind;
+  int remain = nwalkers % nprocs;
+
+  /* Make slices as even as possible */
+  slice_length = nwalkers / nprocs;
+  lower_ind = rank * slice_length;
+  if (rank < remain){
+      lower_ind += rank;
+      slice_length++;
+  }
+  else lower_ind += remain;
+  upper_ind = lower_ind + slice_length;
+
+  // allocate space where we'll store full chain; rank 0 only
+  // idk if I even really want to store the whole chain. Might be good for quickly doing some stats.
+  /*
+  It might actually be good to leave one proc free for i/o and other meta tasks.
+  For now, I'm not going to do this.
+  */
+  if (rank==0) mca_chain *chain = allocate_chain(nwalkers,nsteps,npars);
+
+  /*
+  This will store one step for nwalkers; Each proc has its own copy, but is only
+  responsible for its slice of walkers; i.e., the rest of this structure will need
+  to be communicated via MPI
+  */
+  mca_step *step = allocate_step(nwalkers,npars);
+
+  // have each chain fill its one step
+  // for(int i=lower_ind; i<upper_ind; i++){
+
+  // }
+
+  if (rank==0) free_chain(chain);
+  free_step(step)
+
+  MPI_Finalize();
+  return 0;
 }
