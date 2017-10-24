@@ -19,7 +19,7 @@ typedef struct {
 } mca_chain;
 
 mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
-  struct mca_chain *self=calloc(1,sizeof(struct mca_chain));
+  struct mca_chain *self=calloc(1,sizeof(mca_chain));
   if (self==NULL) {
       fprintf(stderr,"Could not allocate struct mca_chain\n");
       exit(EXIT_FAILURE);
@@ -29,7 +29,7 @@ mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
   self->steps_per_walker=nsteps;
   self->npars=npars;
 
-  self->steps=calloc(nsteps,sizeof(struct mca_step));
+  self->steps=calloc(nsteps,sizeof(mca_step));
   if (self->steps==NULL) {
       fprintf(stderr,"Could not allocate mca_chain steps\n");
       exit(EXIT_FAILURE);
