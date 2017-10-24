@@ -25,9 +25,9 @@ mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
       exit(EXIT_FAILURE);
   }
 
-  self->nwalkers=nwalkers;
-  self->steps_per_walker=nsteps;
-  self->npars=npars;
+  self.nwalkers=nwalkers;
+  self.steps_per_walker=nsteps;
+  self.npars=npars;
 
   self->steps=calloc(nsteps,sizeof(mca_step));
   if (self->steps==NULL) {
