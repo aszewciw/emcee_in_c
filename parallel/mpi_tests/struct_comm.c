@@ -160,11 +160,24 @@ int main( int argc, char ** argv )
     }
   }
 
+  MPI_Datatype MCA_STEP;
+  MPI_Datatype type[3] = { MPI_INT, MPI_DOUBLE, MPI_DOUBLE };
+  int blocklen[3] = { nwalkers, nwalkers, nwalkers*npars }; // size of each data element in struct
+
+  MPI_Aint disp[3]; // array of displacements; one for each data member
+  disp[0] = offsetof(mca_step,accept);
+  disp[1] = offsetof(mca_step,lnprob);
+  disp[2] = offsetof(mca_step,pars);
+
+  MPI_Type_create_struct(3,blocklen,disp,type,&MCA_STEP);
+  MPI_Type_commit(&MCA_STEP);
+
   if (rank==0) {
     free_chain(chain);
   }
   free_step(step);
 
+  MPI_Type_free(&MCA_STEP);
   MPI_Finalize();
   return 0;
 }
