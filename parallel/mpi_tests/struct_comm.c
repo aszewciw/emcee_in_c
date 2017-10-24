@@ -25,10 +25,6 @@ mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
       exit(EXIT_FAILURE);
   }
 
-  self.nwalkers=nwalkers;
-  self.steps_per_walker=nsteps;
-  self.npars=npars;
-
   self->steps=calloc(nsteps,sizeof(mca_step));
   if (self->steps==NULL) {
       fprintf(stderr,"Could not allocate mca_chain steps\n");
@@ -53,6 +49,10 @@ mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
         exit(EXIT_FAILURE);
     }
   }
+
+  self->nwalkers=nwalkers;
+  self->steps_per_walker=nsteps;
+  self->npars=npars;
 
   return self;
 }
