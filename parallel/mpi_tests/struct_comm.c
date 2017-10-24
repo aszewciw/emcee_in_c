@@ -156,7 +156,7 @@ int main( int argc, char ** argv )
   // }
 
   if (rank==0) {
-    free_chain(chain);
+    free_chain(*chain);
   }
   free_step(step);
 
