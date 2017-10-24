@@ -84,8 +84,8 @@ int main( int argc, char ** argv )
    int nsteps=500000;
    int npars=10;
 
-   if(rank==0) mca_chain *chain = allocate_chain(nwalkers,nsteps,npars);
-   if(rank==0) free_chain(chain);
+   mca_chain *chain = allocate_chain(nwalkers,nsteps,npars);
+   free_chain(chain);
    MPI_Finalize();
    return 0;
 }
