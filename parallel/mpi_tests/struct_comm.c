@@ -5,13 +5,13 @@
 
 
 // this is the custom structure that will be communicated in MPI
-typedef struct {
+typedef struct mca_step {
   int *accept;      // 0 or 1; [nwalkers] values
   double *lnprob;   // ln(prob) at point in param space; [nwalkers] values
   double *pars;     // values of parameters; npars*nwalkers values
 } mca_step;
 
-typedef struct {
+typedef struct mca_chain {
   int nwalkers;
   int steps_per_walker;
   int npars;
