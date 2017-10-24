@@ -5,18 +5,18 @@
 
 
 // this is the custom structure that will be communicated in MPI
-struct mca_step {
+typedef struct {
   int *accept;      // 0 or 1; [nwalkers] values
   double *lnprob;   // ln(prob) at point in param space; [nwalkers] values
   double *pars;     // values of parameters; npars*nwalkers values
-};
+} mca_step;
 
-struct mca_chain {
+typedef struct {
   int nwalkers;
   int steps_per_walker;
   int npars;
   mca_step *steps;      // one "step" is the params for the ensemble of walkers
-};
+} mca_chain;
 
 mca_chain allocate_chain(int nwalkers, int nsteps, int npars){
   struct mca_chain *self=calloc(1,sizeof(struct mca_chain));
