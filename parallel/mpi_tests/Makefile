@@ -1,10 +1,10 @@
 CC=mpicc
 CFLAGS=-Wall
 
-struct_comm : struct_comm.c
+step_comm : step_comm.c
 	$(CC) -o $@ $< ${CFLAGS}
 
 .PHONY: clean
 
 clean:
-	rm -f struct_comm
+	rm -f step_comm
