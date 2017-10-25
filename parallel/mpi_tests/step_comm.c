@@ -57,9 +57,6 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
       exit(EXIT_FAILURE);
   }
 
-  fprintf(stderr, "Address of chain ball_1: %p\n", (void*)&self->ball_1);
-  fprintf(stderr, "Address of chain ball_2: %p\n", (void*)&self->ball_2);
-
   for(int i=0; i<nsteps; i++){
     /*
     I realize its somewhat dumb to not make nwalkers part of the chain struct,
@@ -74,6 +71,7 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
     self->ball_1[i].nwalkers=nwalkers_over_two;
     self->ball_1[i].npars=npars;
     self->ball_1[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
+    fprintf(stderr, "Address of chain ball_1 walker_pos %d: %p\n", i,(void*)&self->ball_1[i].walker);
     if (self->ball_1[i].walker==NULL) {
         fprintf(stderr,"Could not allocate struct walker_pos\n");
         exit(EXIT_FAILURE);
@@ -121,9 +119,9 @@ void free_chain(chain *c){
 
 int main( int argc, char ** argv )
 {
-  int nwalkers=500;
-  int npars=30;
-  int nsteps=100;
+  int nwalkers=5;
+  int npars=3;
+  int nsteps=10;
 
   chain *my_chain=allocate_chain(nsteps,nwalkers,npars);
   free_chain(my_chain);
