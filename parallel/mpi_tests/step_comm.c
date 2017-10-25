@@ -201,7 +201,7 @@ int main( int argc, char ** argv )
   ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
   walker_pos *my_walkers=calloc(nwalkers_over_two, sizeof(walker_pos));
   for(int i=0;i<nwalkers_over_two;i++){
-    my_walkers[i]->pars=calloc(npars,sizeof(double));
+    my_walkers[i].pars=calloc(npars,sizeof(double));
     fprintf(stderr, "%d\n", i);
   }
 
