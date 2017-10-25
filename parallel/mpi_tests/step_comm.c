@@ -57,6 +57,9 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
       exit(EXIT_FAILURE);
   }
 
+  fprintf(stderr, "Address of chain ball_1: %p\n", (void*)&self->ball_1);
+  fprintf(stderr, "Address of chain ball_2: %p\n", (void*)&self->ball_2);
+
   for(int i=0; i<nsteps; i++){
     /*
     I realize its somewhat dumb to not make nwalkers part of the chain struct,
