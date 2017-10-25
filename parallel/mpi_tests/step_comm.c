@@ -79,6 +79,7 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
     self->ball_2[i].nwalkers=nwalkers_over_two;
     self->ball_2[i].npars=npars;
     self->ball_2[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
+    fprintf(stderr, "Address of chain ball_1 walker_pos %d: %p\n", i,(void*)&self->ball_2[i].walker);
     if (self->ball_2[i].walker==NULL) {
         fprintf(stderr,"Could not allocate struct walker_pos\n");
         exit(EXIT_FAILURE);
