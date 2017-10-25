@@ -191,6 +191,8 @@ int main( int argc, char ** argv )
   else lower_ind += remain;
   upper_ind = lower_ind + slice_length;
 
+  fprintf(stderr, "%d %d %d\n", lower_ind, upper_ind, slice_length);
+
   chain *my_chain;
   if (rank==0){
     my_chain=allocate_chain(nsteps,nwalkers,npars);
@@ -199,7 +201,8 @@ int main( int argc, char ** argv )
   ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
   walker_pos *my_walkers=calloc(slice_length, sizeof(walker_pos));
   for(int i=0;i<slice_length;i++){
-    my_walkers[i]->pars=calloc(npars,sizeof(double));
+  //   my_walkers[i]->pars=calloc(npars,sizeof(double));
+    fprintf(stderr, "%d\n", i);
   }
 
 
@@ -221,10 +224,10 @@ int main( int argc, char ** argv )
   if(rank==0) free_chain(my_chain);
   free_ensemble(my_ensemble);
   // free_walkers(my_walkers,slice_length);
-  for(int i=0;i<slice_length;i++){
-    free(my_walkers[i]->pars);
-  }
-  free(my_walkers);
+  // for(int i=0;i<slice_length;i++){
+  //   free(my_walkers[i].pars);
+  // }
+  // free(my_walkers);
   MPI_Finalize();
   return 0;
 }
