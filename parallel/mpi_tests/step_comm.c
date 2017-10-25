@@ -40,6 +40,11 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
       exit(EXIT_FAILURE);
   }
 
+  fprintf(stderr, "Address of chain nsteps: %u\n", &nsteps);
+  fprintf(stderr, "Address of chain ball_1: %u\n", ball_1);
+  fprintf(stderr, "Address of chain ball_2: %u\n", ball_2);
+
+
   /* allocate space for nsteps ensembles */
   self->ball_1=calloc(nsteps,sizeof(ensemble));
   if (self->ball_1==NULL) {
@@ -51,6 +56,8 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
       fprintf(stderr,"Could not allocate struct ensemble\n");
       exit(EXIT_FAILURE);
   }
+
+  fprintf(stderr, "%s\n", );
 
   for(int i=0; i<nsteps; i++){
     /*
@@ -110,17 +117,6 @@ void free_chain(chain *c){
   free(c);
 }
 
-// void free_step(mca_step *step){
-//   free(step->pars);
-//   free(step->lnprob);
-//   free(step->accept);
-//   free(step);
-// }
-
-// void printStudent( student * student_x , int prank, int np )
-// {
-
-// }
 
 int main( int argc, char ** argv )
 {
