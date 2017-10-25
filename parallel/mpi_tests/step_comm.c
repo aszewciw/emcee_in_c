@@ -23,17 +23,19 @@ typedef struct chain {
   ensemble * ball_2;
 } chain;
 
-walker_pos* allocate_walker(int npars){
-  struct walker_pos *self=calloc(1,sizeof(walker_pos));
+walker_pos* allocate_walkers(int nwalkers, int npars){
+  struct walker_pos *self=calloc(nwalkers,sizeof(walker_pos));
   if (self==NULL) {
     fprintf(stderr,"Could not allocate struct walker_pos\n");
     exit(EXIT_FAILURE);
   }
 
-  self->pars=calloc(npars,sizeof(double));
-  if (self->pars==NULL) {
-    fprintf(stderr,"Could not allocate array pars\n");
-    exit(EXIT_FAILURE);
+  for(int i=0; i<nwalkers; i++){
+    self[i].pars=calloc(npars,sizeof(double));
+    if (self[i].pars==NULL) {
+      fprintf(stderr,"Could not allocate array pars\n");
+      exit(EXIT_FAILURE);
+    }
   }
 
   return self;
@@ -129,8 +131,10 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
   return self;
 }
 
-void free_walker(walker_pos *w){
-  free(w->pars);
+void free_walkers(walker_pos *w, int nwalkers){
+  for(int i=0; i<nwalkers; i++){
+    free(w[i].pars);
+  }
   free(w);
 }
 
@@ -194,6 +198,8 @@ int main( int argc, char ** argv )
     my_chain=allocate_chain(nsteps,nwalkers,npars);
   }
 
+  ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
+  walker_pos *my_walkers=allocate_walkers(slice_length,npars);
 
 
   // for(int istep=0; istep<nsteps; istep++){
@@ -212,6 +218,8 @@ int main( int argc, char ** argv )
 
 
   if(rank==0) free_chain(my_chain);
+  free_ensemble(my_ensemble);
+  free_walkers(my_walkers,slice_length);
   MPI_Finalize();
   return 0;
 }
