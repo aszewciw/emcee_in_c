@@ -40,9 +40,9 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
       exit(EXIT_FAILURE);
   }
 
-  fprintf(stderr, "Address of chain nsteps: %u\n", &nsteps);
-  fprintf(stderr, "Address of chain ball_1: %u\n", ball_1);
-  fprintf(stderr, "Address of chain ball_2: %u\n", ball_2);
+  fprintf(stderr, "Address of chain nsteps: %u\n", &self.nsteps);
+  fprintf(stderr, "Address of chain ball_1: %u\n", &self.ball_1);
+  fprintf(stderr, "Address of chain ball_2: %u\n", &self.ball_2);
 
 
   /* allocate space for nsteps ensembles */
@@ -56,8 +56,6 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
       fprintf(stderr,"Could not allocate struct ensemble\n");
       exit(EXIT_FAILURE);
   }
-
-  fprintf(stderr, "%s\n", );
 
   for(int i=0; i<nsteps; i++){
     /*
