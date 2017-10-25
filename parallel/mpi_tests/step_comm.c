@@ -220,7 +220,11 @@ int main( int argc, char ** argv )
 
   if(rank==0) free_chain(my_chain);
   free_ensemble(my_ensemble);
-  free_walkers(my_walkers,slice_length);
+  // free_walkers(my_walkers,slice_length);
+  for(int i=0;i<slice_length;i++){
+    free(my_walkers[i].pars);
+  }
+  free(my_walkers);
   MPI_Finalize();
   return 0;
 }
