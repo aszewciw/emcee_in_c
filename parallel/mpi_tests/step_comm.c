@@ -124,8 +124,8 @@ void free_chain(chain *c){
 
 int main( int argc, char ** argv )
 {
-  int nwalkers=10;
-  int npars=5;
+  int nwalkers=500;
+  int npars=30;
   int nsteps=100;
 
   chain *my_chain=allocate_chain(nsteps,nwalkers,npars);
