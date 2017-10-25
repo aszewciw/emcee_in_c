@@ -93,20 +93,20 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
   self->nsteps=nsteps;
 }
 
-void free_chain(mca_chain *chain){
-  int nsteps=chain->nsteps;
+void free_chain(chain *c){
+  int nsteps=c->nsteps;
   for(int i=0; i<nsteps; i++){
-    int nwalkers=chain->ball_1[i].nwalkers;
+    int nwalkers=c->ball_1[i].nwalkers;
     for(int j=0; j<nwalkers; j++){
-      free(chain->ball_1[i].walker[j].pars);
-      free(chain->ball_2[i].walker[j].pars);
+      free(c->ball_1[i].walker[j].pars);
+      free(c->ball_2[i].walker[j].pars);
     }
-    free(chain->ball_1[i].walker);
-    free(chain->ball_2[i].walker);
+    free(c->ball_1[i].walker);
+    free(c->ball_2[i].walker);
   }
-  free(chain->ball_1);
-  free(chain->ball_2);
-  free(chain);
+  free(c->ball_1);
+  free(c->ball_2);
+  free(c);
 }
 
 // void free_step(mca_step *step){
