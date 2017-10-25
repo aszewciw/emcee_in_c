@@ -150,6 +150,7 @@ int main( int argc, char ** argv )
   to be communicated via MPI
   */
   mca_step *step = allocate_step(nwalkers,npars);
+  mca_step *step_combined = allocate_step(nwalkers,npars);
 
   // have each chain fill its one step
   for(int i=lower_ind; i<upper_ind; i++){
@@ -172,10 +173,29 @@ int main( int argc, char ** argv )
   MPI_Type_create_struct(3,blocklen,disp,type,&MCA_STEP);
   MPI_Type_commit(&MCA_STEP);
 
+  MPI_Allreduce(step,step_combined,1,MCA_STEP,MPI_SUM,MPI_COMM_WORLD);
+
+  int current_rank=0;
+  while(current_rank<nprocs){
+    if (current_rank==rank){
+      fprintf(stderr, "Rank %d is printing:\n\n", current_rank);
+      for(int i=0; i<nwalkers; i++){
+        fprintf(stderr, "Walker %d accept: %d\n", i,step->pars[i]);
+        fprintf(stderr, "Walker %d lnprob: %lf\n", i,step->lnprob[i]);
+        for(int j=0; j<npars; j++){
+          fprintf(stderr, "Walker %d param %d: %lf\n", i,j,step->pars[i+j])
+        }
+      }
+    }
+    current_rank+=1;
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+
   if (rank==0) {
     free_chain(chain);
   }
   free_step(step);
+  free_step(step_combined);
 
   MPI_Type_free(&MCA_STEP);
   MPI_Finalize();
