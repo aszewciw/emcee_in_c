@@ -198,8 +198,8 @@ int main( int argc, char ** argv )
     my_chain=allocate_chain(nsteps,nwalkers,npars);
   }
 
-  ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
-  walker_pos *my_walkers=allocate_walkers(slice_length,npars);
+  // ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
+  // walker_pos *my_walkers=allocate_walkers(slice_length,npars);
 
 
   // for(int istep=0; istep<nsteps; istep++){
@@ -218,8 +218,8 @@ int main( int argc, char ** argv )
 
 
   if(rank==0) free_chain(my_chain);
-  free_ensemble(my_ensemble);
-  free_walkers(my_walkers,slice_length);
+  // free_ensemble(my_ensemble);
+  // free_walkers(my_walkers,slice_length);
   MPI_Finalize();
   return 0;
 }
