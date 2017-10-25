@@ -201,7 +201,7 @@ int main( int argc, char ** argv )
 
   ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
   walker_pos *my_walkers;
-  allocate_walkers(slice_length,npars,my_walkers);
+  allocate_walkers(1,npars,my_walkers);
 
 
   // for(int istep=0; istep<nsteps; istep++){
@@ -221,7 +221,7 @@ int main( int argc, char ** argv )
 
   if(rank==0) free_chain(my_chain);
   free_ensemble(my_ensemble);
-  free_walkers(my_walkers,slice_length);
+  free_walkers(my_walkers,1);
   // for(int i=0;i<nwalkers_over_two;i++){
   //   free(my_walkers[i].pars);
   // }
