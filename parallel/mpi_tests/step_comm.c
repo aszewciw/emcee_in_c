@@ -227,7 +227,7 @@ int main( int argc, char ** argv )
   // for(int i=0;i<slice_length;i++){
   //   free(my_walkers[i].pars);
   // }
-  // free(my_walkers);
+  free(my_walkers);
   MPI_Finalize();
   return 0;
 }
