@@ -40,9 +40,9 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
       exit(EXIT_FAILURE);
   }
 
-  fprintf(stderr, "Address of chain nsteps: %p\n", (void*)&self->nsteps);
-  fprintf(stderr, "Address of chain ball_1: %p\n", (void*)&self->ball_1);
-  fprintf(stderr, "Address of chain ball_2: %p\n", (void*)&self->ball_2);
+  // fprintf(stderr, "Address of chain nsteps: %p\n", (void*)&self->nsteps);
+  // fprintf(stderr, "Address of chain ball_1: %p\n", (void*)&self->ball_1);
+  // fprintf(stderr, "Address of chain ball_2: %p\n", (void*)&self->ball_2);
 
 
   /* allocate space for nsteps ensembles */
@@ -71,7 +71,7 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
     self->ball_1[i].nwalkers=nwalkers_over_two;
     self->ball_1[i].npars=npars;
     self->ball_1[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
-    fprintf(stderr, "Address of chain ball_1 walker_pos %d: %p\n", i,(void*)&self->ball_1[i].walker);
+    // fprintf(stderr, "Address of chain ball_1 walker_pos %d: %p\n", i,(void*)&self->ball_1[i].walker);
     if (self->ball_1[i].walker==NULL) {
         fprintf(stderr,"Could not allocate struct walker_pos\n");
         exit(EXIT_FAILURE);
@@ -79,7 +79,7 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
     self->ball_2[i].nwalkers=nwalkers_over_two;
     self->ball_2[i].npars=npars;
     self->ball_2[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
-    fprintf(stderr, "Address of chain ball_2 walker_pos %d: %p\n", i,(void*)&self->ball_2[i].walker);
+    // fprintf(stderr, "Address of chain ball_2 walker_pos %d: %p\n", i,(void*)&self->ball_2[i].walker);
     if (self->ball_2[i].walker==NULL) {
         fprintf(stderr,"Could not allocate struct walker_pos\n");
         exit(EXIT_FAILURE);
@@ -120,11 +120,38 @@ void free_chain(chain *c){
 
 int main( int argc, char ** argv )
 {
-  int nwalkers=5;
+  int nwalkers=10;
   int npars=3;
   int nsteps=10;
+  int nwalkers_over_two=nwalkers/2;
 
   chain *my_chain=allocate_chain(nsteps,nwalkers,npars);
+
+  for(int istep=0; istep<nsteps; istep++){
+    for(int iwalker=0; iwalker<nwalkers_over_two; iwalker++){
+      chain[istep].ball_1[iwalker].accept=istep*iwalker;
+      chain[istep].ball_1[iwalker].lnprob=(double)(istep*iwalker+100);
+      for(int ipar=0;ipar<npars;ipar++){
+        chain[istep].ball_1[iwalker].pars[ipar]=(double)(istep*iwalker*ipar+1000);
+      }
+    }
+  }
+
+  for(int istep=0; istep<nsteps; istep++){
+    for(int iwalker=0; iwalker<nwalkers_over_two; iwalker++){
+      if(chain[istep].ball_1[iwalker].accept!=istep*iwalker){
+        fprintf(stderr, "Error: unexpected accept value for istep %d, iwalker %d\n", istep,iwalker);
+      }
+      if(chain[istep].ball_1[iwalker].lnprob!=(double)(istep*iwalker+100)){
+        fprintf(stderr, "Error: unexpected lnprob value for istep %d, iwalker %d\n", istep,iwalker);
+      }
+      for(int ipar=0;ipar<npars;ipar++){
+        if(chain[istep].ball_1[iwalker].pars[ipar]!=(double)(istep*iwalker*ipar+1000)){
+          fprintf(stderr, "Error: unexpected par value for istep %d, iwalker %d, ipar %d\n", istep,iwalker,ipar);
+        }
+      }
+    }
+  }
   free_chain(my_chain);
   return 0;
 }
