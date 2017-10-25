@@ -138,11 +138,11 @@ void free_walker(walker_pos *w){
 void free_ensemble(ensemble *e){
   int nwalkers=e->nwalkers;
   for(int i=0; i<nwalkers; i++){
-    free(c->walker[i].pars);
-    free(c->walker[i].pars);
+    free(e->walker[i].pars);
+    free(e->walker[i].pars);
   }
-  free(c->walker);
-  free(c);
+  free(e->walker);
+  free(e);
 }
 
 void free_chain(chain *c){
