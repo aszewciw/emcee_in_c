@@ -91,6 +91,7 @@ chain* allocate_chain(int nsteps, int nwalkers, int npars){
     }
   }
   self->nsteps=nsteps;
+  return self;
 }
 
 void free_chain(chain *c){
