@@ -180,7 +180,7 @@ int main( int argc, char ** argv )
     if (current_rank==rank){
       fprintf(stderr, "Rank %d is printing:\n\n", current_rank);
       for(int i=0; i<nwalkers; i++){
-        fprintf(stderr, "Walker %d accept: %d\n", i,step->pars[i]);
+        fprintf(stderr, "Walker %d accept: %d\n", i,step->accept[i]);
         fprintf(stderr, "Walker %d lnprob: %lf\n", i,step->lnprob[i]);
         for(int j=0; j<npars; j++){
           fprintf(stderr, "Walker %d param %d: %lf\n", i,j,step->pars[i+j])
