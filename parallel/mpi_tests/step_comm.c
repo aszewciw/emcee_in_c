@@ -31,7 +31,8 @@ void allocate_walkers(int nwalkers, int npars, walker_pos *w){
   }
 
   for(int i=0; i<nwalkers; i++){
-    w[i].pars=calloc(npars,sizeof(double));
+    double *b=calloc(npars,sizeof(double));
+    w[i].pars=b;
     if (w[i].pars==NULL) {
       fprintf(stderr,"Could not allocate array pars\n");
       exit(EXIT_FAILURE);
@@ -199,11 +200,8 @@ int main( int argc, char ** argv )
   }
 
   ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
-  walker_pos *my_walkers=calloc(nwalkers_over_two, sizeof(walker_pos));
-  for(int i=0;i<nwalkers_over_two;i++){
-    my_walkers[i].pars=calloc(npars,sizeof(double));
-    fprintf(stderr, "%d\n", i);
-  }
+  walker_pos *my_walkers;
+  allocate_walkers(slice_length,npars,my_walkers);
 
 
   // for(int istep=0; istep<nsteps; istep++){
@@ -223,11 +221,11 @@ int main( int argc, char ** argv )
 
   if(rank==0) free_chain(my_chain);
   free_ensemble(my_ensemble);
-  // free_walkers(my_walkers,nwalkers_over_two);
-  for(int i=0;i<nwalkers_over_two;i++){
-    free(my_walkers[i].pars);
-  }
-  free(my_walkers);
+  free_walkers(my_walkers,slice_length);
+  // for(int i=0;i<nwalkers_over_two;i++){
+  //   free(my_walkers[i].pars);
+  // }
+  // free(my_walkers);
   MPI_Finalize();
   return 0;
 }
