@@ -1,0 +1,133 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h> // offsetof()
+#include "mpi.h"
+
+
+// this is the custom structure that will be communicated in MPI
+typedef struct walker_pos {
+  int accept;
+  double lnprob;
+  double *pars;
+} walker_pos;
+
+typedef struct ensemble {
+  int nwalkers;
+  int npars;
+  walker_pos *walker;
+} ensemble;
+
+typedef struct chain {
+  int nsteps;
+  ensemble * ball_1;
+  ensemble * ball_2;
+} chain;
+
+// walker_pos* allocate_walker(){
+
+// }
+
+// ensemble* allocate_ensemble(){
+
+// }
+
+chain* allocate_chain(int nsteps, int nwalkers, int npars){
+
+  int nwalkers_over_two=nwalkers/2;
+  struct chain *self=calloc(1,sizeof(chain));
+  if (self==NULL) {
+      fprintf(stderr,"Could not allocate struct chain\n");
+      exit(EXIT_FAILURE);
+  }
+
+  /* allocate space for nsteps ensembles */
+  self->ball_1=calloc(nsteps,sizeof(ensemble));
+  if (self->ball_1==NULL) {
+      fprintf(stderr,"Could not allocate struct ensemble\n");
+      exit(EXIT_FAILURE);
+  }
+  self->ball_2=calloc(nsteps,sizeof(ensemble));
+  if (self->ball_2==NULL) {
+      fprintf(stderr,"Could not allocate struct ensemble\n");
+      exit(EXIT_FAILURE);
+  }
+
+  for(int i=0; i<nsteps; i++){
+    /*
+    I realize its somewhat dumb to not make nwalkers part of the chain struct,
+    but I'd prefer it to be a property of an ensemble, even though in this case
+    I'm copying the same number nsteps times.
+
+    Same can be said for npars. I could have also made the extra annoying decision
+    to place it within the struct walker_pos. But this is the custom struct I
+    set up for an MPI Allgatherv. It seems quite dumb to be gathering a value
+    that never changes...
+    */
+    self->ball_1[i].nwalkers=nwalkers_over_two;
+    self->ball_1[i].npars=npars;
+    self->ball_1[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
+    if (self->ball_1[i].walker==NULL) {
+        fprintf(stderr,"Could not allocate struct walker_pos\n");
+        exit(EXIT_FAILURE);
+    }
+    self->ball_2[i].nwalkers=nwalkers_over_two;
+    self->ball_2[i].npars=npars;
+    self->ball_2[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
+    if (self->ball_2[i].walker==NULL) {
+        fprintf(stderr,"Could not allocate struct walker_pos\n");
+        exit(EXIT_FAILURE);
+    }
+    for(int j=0; j<nwalkers_over_two; j++){
+      self->ball_1[i].walker[j].pars=calloc(npars,sizeof(double));
+      if (self->ball_1[i].walker[j].pars==NULL) {
+          fprintf(stderr,"Could not allocate struct pars\n");
+          exit(EXIT_FAILURE);
+      }
+      self->ball_2[i].walker[j].pars=calloc(npars,sizeof(double));
+      if (self->ball_2[i].walker[j].pars==NULL) {
+          fprintf(stderr,"Could not allocate struct pars\n");
+          exit(EXIT_FAILURE);
+      }
+    }
+  }
+  self->nsteps=nsteps;
+}
+
+void free_chain(mca_chain *chain){
+  int nsteps=chain->nsteps;
+  for(int i=0; i<nsteps; i++){
+    int nwalkers=chain->ball_1[i].nwalkers;
+    for(int j=0; j<nwalkers; j++){
+      free(chain->ball_1[i].walker[j].pars);
+      free(chain->ball_2[i].walker[j].pars);
+    }
+    free(chain->ball_1[i].walker);
+    free(chain->ball_2[i].walker);
+  }
+  free(chain->ball_1);
+  free(chain->ball_2);
+  free(chain);
+}
+
+// void free_step(mca_step *step){
+//   free(step->pars);
+//   free(step->lnprob);
+//   free(step->accept);
+//   free(step);
+// }
+
+// void printStudent( student * student_x , int prank, int np )
+// {
+
+// }
+
+int main( int argc, char ** argv )
+{
+  int nwalkers=10;
+  int npars=5;
+  int nsteps=100;
+
+  chain *my_chain=allocate_chain(nsteps,nwalkers,npars);
+  free_chain(my_chain);
+  return 0;
+}
