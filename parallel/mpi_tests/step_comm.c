@@ -157,8 +157,10 @@ int main( int argc, char ** argv )
       for(int ipar=0;ipar<npars;ipar++){
         if(my_chain->ball_1[istep].walker[iwalker].pars[ipar]!=(double)(istep*iwalker*ipar+1000)){
           fprintf(stderr, "Error: unexpected par value for istep %d, iwalker %d, ipar %d\n", istep,iwalker,ipar);
+        }
         if(my_chain->ball_2[istep].walker[iwalker].pars[ipar]!=(double)(istep*iwalker*ipar+2000)){
-          fprintf(stderr, "Error: unexpected par value for istep %d, iwalker %d, ipar %d\n", istep,iwalker,ipar);        }
+          fprintf(stderr, "Error: unexpected par value for istep %d, iwalker %d, ipar %d\n", istep,iwalker,ipar);
+        }
       }
     }
   }
