@@ -197,7 +197,7 @@ int main( int argc, char ** argv )
   }
 
   ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
-  walker_pos *my_walkers;
+  walker_pos my_walkers;
   allocate_walkers(slice_length,npars,&my_walkers);
 
 
