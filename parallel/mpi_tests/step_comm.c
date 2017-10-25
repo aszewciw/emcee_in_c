@@ -129,35 +129,35 @@ int main( int argc, char ** argv )
 
   for(int istep=0; istep<nsteps; istep++){
     for(int iwalker=0; iwalker<nwalkers_over_two; iwalker++){
-      chain->ball_1[istep].walker[iwalker].accept=istep*iwalker;
-      chain->ball_1[istep].walker[iwalker].lnprob=(double)(istep*iwalker+100);
-      chain->ball_2[istep].walker[iwalker].accept=istep*iwalker*100;
-      chain->ball_2[istep].walker[iwalker].lnprob=(double)(istep*iwalker+200);
+      my_chain->ball_1[istep].walker[iwalker].accept=istep*iwalker;
+      my_chain->ball_1[istep].walker[iwalker].lnprob=(double)(istep*iwalker+100);
+      my_chain->ball_2[istep].walker[iwalker].accept=istep*iwalker*100;
+      my_chain->ball_2[istep].walker[iwalker].lnprob=(double)(istep*iwalker+200);
       for(int ipar=0;ipar<npars;ipar++){
-        chain->ball_1[istep].walker[iwalker].pars[ipar]=(double)(istep*iwalker*ipar+1000);
-        chain->ball_2[istep].walker[iwalker].pars[ipar]=(double)(istep*iwalker*ipar+2000);
+        my_chain->ball_1[istep].walker[iwalker].pars[ipar]=(double)(istep*iwalker*ipar+1000);
+        my_chain->ball_2[istep].walker[iwalker].pars[ipar]=(double)(istep*iwalker*ipar+2000);
       }
     }
   }
 
   for(int istep=0; istep<nsteps; istep++){
     for(int iwalker=0; iwalker<nwalkers_over_two; iwalker++){
-      if(chain->ball_1[istep].walker[iwalker].accept!=istep*iwalker){
+      if(my_chain->ball_1[istep].walker[iwalker].accept!=istep*iwalker){
         fprintf(stderr, "Error: unexpected accept value for istep %d, iwalker %d\n", istep,iwalker);
       }
-      if(chain->ball_1[istep].walker[iwalker].lnprob!=(double)(istep*iwalker+100)){
+      if(my_chain->ball_1[istep].walker[iwalker].lnprob!=(double)(istep*iwalker+100)){
         fprintf(stderr, "Error: unexpected lnprob value for istep %d, iwalker %d\n", istep,iwalker);
       }
-      if(chain->ball_2[istep].walker[iwalker].accept!=istep*iwalker*100){
+      if(my_chain->ball_2[istep].walker[iwalker].accept!=istep*iwalker*100){
         fprintf(stderr, "Error: unexpected accept value for istep %d, iwalker %d\n", istep,iwalker);
       }
-      if(chain->ball_2[istep].walker[iwalker].lnprob!=(double)(istep*iwalker+200)){
+      if(my_chain->ball_2[istep].walker[iwalker].lnprob!=(double)(istep*iwalker+200)){
         fprintf(stderr, "Error: unexpected lnprob value for istep %d, iwalker %d\n", istep,iwalker);
       }
       for(int ipar=0;ipar<npars;ipar++){
-        if(chain->ball_1[istep].walker[iwalker].pars[ipar]!=(double)(istep*iwalker*ipar+1000)){
+        if(my_chain->ball_1[istep].walker[iwalker].pars[ipar]!=(double)(istep*iwalker*ipar+1000)){
           fprintf(stderr, "Error: unexpected par value for istep %d, iwalker %d, ipar %d\n", istep,iwalker,ipar);
-        if(chain->ball_2[istep].walker[iwalker].pars[ipar]!=(double)(istep*iwalker*ipar+2000)){
+        if(my_chain->ball_2[istep].walker[iwalker].pars[ipar]!=(double)(istep*iwalker*ipar+2000)){
           fprintf(stderr, "Error: unexpected par value for istep %d, iwalker %d, ipar %d\n", istep,iwalker,ipar);        }
       }
     }
