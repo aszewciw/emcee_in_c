@@ -179,7 +179,7 @@ int main( int argc, char ** argv )
       fprintf(stderr, "Rank %d reporting for duty:\n", rank);
       for(int iwalker=0; iwalker<slice_length; iwalker++){
         int acc = my_walkers[iwalker].accept;
-        int prob = my_walkers[iwalker].lnprob;
+        double prob = my_walkers[iwalker].lnprob;
         fprintf(stderr, "\tWalker %d - accept %d, lnprob %lf\n", iwalker,acc,prob);
         fprintf(stderr, "\t\tParams:");
         for(int ipar=0;ipar<npars;ipar++){
@@ -247,7 +247,7 @@ int main( int argc, char ** argv )
       fprintf(stderr, "Rank %d reporting for duty:\n", rank);
       for(int iwalker=0; iwalker<nwalkers; iwalker++){
         int acc = my_ensemble->walker[iwalker].accept;
-        int prob = my_ensemble->walker[iwalker].lnprob;
+        double prob = my_ensemble->walker[iwalker].lnprob;
         fprintf(stderr, "\tWalker %d - accept %d, lnprob %lf\n", iwalker,acc,prob);
         fprintf(stderr, "\t\tParams:");
         for(int ipar=0;ipar<npars;ipar++){
