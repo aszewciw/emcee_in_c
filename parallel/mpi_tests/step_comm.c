@@ -238,7 +238,7 @@ int main( int argc, char ** argv )
   int counts[nprocs];
   int tmp_start, tmp_slice;
 
-  for(i=0; i<nprocs; i++)
+  for(int i=0; i<nprocs; i++)
   {
     tmp_slice=nwalkers/nprocs;
     tmp_start=i*slice_length;
@@ -255,7 +255,7 @@ int main( int argc, char ** argv )
 
 
   MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                 &my_ensemble.walker[0], counts, mpi_disp,
+                 my_ensemble.walker[0], counts, mpi_disp,
                  MPI_WALKER, MPI_COMM_WORLD);
 
   if(rank==0) free_chain(my_chain);
