@@ -215,7 +215,7 @@ int main( int argc, char ** argv )
   MPI_Aint disp[3]; // array of displacements; one for each data member
   disp[0] = offsetof(walker_pos,accept);
   disp[1] = offsetof(walker_pos,lnprob);
-  disp[2] = offsetof(walker_pos,*pars);
+  disp[2] = offsetof(walker_pos,pars);
 
   MPI_Type_create_struct(3,blocklen,disp,type,&MPI_WALKER);
   MPI_Type_commit(&MPI_WALKER);
