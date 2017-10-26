@@ -204,9 +204,9 @@ int main( int argc, char ** argv )
   // have each chain fill its walker_pos
   for(int i=0; i<slice_length; i++){
     my_walkers[i].accept = rank+1;
-    my_walkers[i].lnprob = (rank+1)*10.0;
+    my_walkers[i].lnprob = (double)(rank+1);
     for(int j=0; j<npars; j++){
-      my_walkers[i].pars[j] = (double)(rank+i+j+1);
+      my_walkers[i].pars[j] = (double)(rank+1);
     }
   }
 
@@ -234,9 +234,28 @@ int main( int argc, char ** argv )
   //     }
   //   }
   // }
+  int mpi_disp[nprocs];
+  int counts[nprocs];
+  int tmp_start, tmp_slice;
 
-  MPI_Allgatherv(&my_walkers, slice_length, MPI_WALKER,
-                 &my_ensemble, slice_length, lower_ind,
+  for(i=0; i<nprocs; i++)
+  {
+    tmp_slice=nwalkers/nprocs;
+    tmp_start=i*slice_length;
+    if(i<remain){
+      tmp_start+=i;
+      tmp_slice++;
+    }
+    else{
+      tmp_start+=remain;
+    }
+    mpi_disp[i]=tmp_start;
+    counts[i]=tmp_slice;
+  }
+
+
+  MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+                 &my_ensemble.walker[0], counts, mpi_disp,
                  MPI_WALKER, MPI_COMM_WORLD);
 
   if(rank==0) free_chain(my_chain);
