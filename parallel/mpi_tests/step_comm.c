@@ -142,7 +142,6 @@ void free_ensemble(ensemble *e){
   int nwalkers=e->nwalkers;
   for(int i=0; i<nwalkers; i++){
     free(e->walker[i].pars);
-    free(e->walker[i].pars);
   }
   free(e->walker);
   free(e);
@@ -200,7 +199,6 @@ int main( int argc, char ** argv )
   }
 
   ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
-  // struct walker_pos *my_walkers=calloc(1,sizeof(walker_pos));
   walker_pos *my_walkers=allocate_walkers(slice_length,npars);
 
 
