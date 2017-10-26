@@ -191,8 +191,6 @@ int main( int argc, char ** argv )
   else lower_ind += remain;
   upper_ind = lower_ind + slice_length;
 
-  fprintf(stderr, "%d %d %d\n", lower_ind, upper_ind, slice_length);
-
   chain *my_chain;
   if (rank==0){
     my_chain=allocate_chain(nsteps,nwalkers,npars);
@@ -201,6 +199,26 @@ int main( int argc, char ** argv )
   ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
   walker_pos *my_walkers=allocate_walkers(slice_length,npars);
 
+  // have each chain fill its walker_pos
+  for(int i=lower_ind; i<upper_ind; i++){
+    my_walkers[i].accept = rank+1;
+    my_walkers[i].lnprob = (rank+1)*10.0;
+    for(int j=0; j<npars; j++){
+      my_walkers[i].pars[j] = (double)(rank+i+j+1);
+    }
+  }
+
+  MPI_Datatype MPI_WALKER;
+  MPI_Datatype type[3] = { MPI_INT, MPI_DOUBLE, MPI_DOUBLE };
+  int blocklen[3] = { 1, 1, npars }; // size of each data element in struct
+
+  MPI_Aint disp[3]; // array of displacements; one for each data member
+  disp[0] = offsetof(walker_pos,accept);
+  disp[1] = offsetof(walker_pos,lnprob);
+  disp[2] = offsetof(walker_pos,pars);
+
+  MPI_Type_create_struct(3,blocklen,disp,type,&MPI_WALKER);
+  MPI_Type_commit(&MPI_WALKER);
 
   // for(int istep=0; istep<nsteps; istep++){
   //   for(int iwalker=0; iwalker<nwalkers_over_two; iwalker++){
@@ -217,10 +235,12 @@ int main( int argc, char ** argv )
 
 
 
+
   if(rank==0) free_chain(my_chain);
   free_ensemble(my_ensemble);
   free_walkers(my_walkers,slice_length);
 
+  MPI_Type_free(&MPI_WALKER);
   MPI_Finalize();
   return 0;
 }
