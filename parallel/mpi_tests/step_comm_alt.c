@@ -168,7 +168,7 @@ int main( int argc, char ** argv )
     my_walkers[i].accept = rank;
     my_walkers[i].lnprob = 0.0;
     for(int j=0; j<npars; j++){
-      my_walkers[i].pars[j] = (double)(rank+1+i+j);
+      my_walkers[i].pars[j] = (double)(rank*10+i+j);
     }
   }
 
