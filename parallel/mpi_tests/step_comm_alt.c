@@ -220,6 +220,26 @@ int main( int argc, char ** argv )
                  &my_ensemble->walker[0], counts, mpi_disp,
                  MPI_WALKER, MPI_COMM_WORLD);
 
+  int current_rank=0;
+  while(current_rank<nprocs){
+    if(rank==current_rank){
+      fprintf(stderr, "\n");
+      fprintf(stderr, "Rank %d reporting for duty:\n", rank);
+      for(int iwalker=0; iwalker<nwalkers; iwalker++){
+        int acc = my_ensemble->walker[iwalker].accept;
+        int prob = my_ensemble->walker[iwalker].lnprob;
+        fprintf(stderr, "\tWalker %d - accept %d, lnprob %lf\n", iwalker,acc,prob);
+        fprintf(stderr, "\t\tParams:");
+        for(int ipar=0;ipar<npars;ipar++){
+          fprintf(stderr, "\t%lf", my_ensemble->walker[iwalker].pars[ipar]);
+        }
+        fprintf(stderr, "\n");
+      }
+    }
+    current_rank++;
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+
   if(rank==0) free_chain(my_chain);
   free_ensemble(my_ensemble);
   free_walkers(my_walkers);
