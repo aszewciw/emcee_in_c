@@ -166,7 +166,7 @@ int main( int argc, char ** argv )
   // have each chain fill its walker_pos
   for(int i=0; i<slice_length; i++){
     my_walkers[i].accept = rank;
-    my_walkers[i].lnprob = 0.0;
+    my_walkers[i].lnprob = 444.0;
     for(int j=0; j<npars; j++){
       my_walkers[i].pars[j] = (double)(rank+i+j*10);
     }
