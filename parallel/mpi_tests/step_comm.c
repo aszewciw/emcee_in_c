@@ -254,9 +254,9 @@ int main( int argc, char ** argv )
   }
 
 
-  MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                 &my_ensemble->walker[0], counts, mpi_disp,
-                 MPI_WALKER, MPI_COMM_WORLD);
+  // MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+  //                &my_ensemble->walker[0], counts, mpi_disp,
+  //                MPI_WALKER, MPI_COMM_WORLD);
 
   if(rank==0) free_chain(my_chain);
   free_ensemble(my_ensemble);
