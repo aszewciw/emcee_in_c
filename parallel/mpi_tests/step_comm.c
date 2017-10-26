@@ -235,8 +235,9 @@ int main( int argc, char ** argv )
   //   }
   // }
 
-
-
+  MPI_Allgatherv(&my_walkers, slice_length, MPI_WALKER,
+                 &my_ensemble, slice_length, lower_ind,
+                 MPI_WALKER, MPI_COMM_WORLD);
 
   if(rank==0) free_chain(my_chain);
   free_ensemble(my_ensemble);
