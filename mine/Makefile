@@ -6,7 +6,8 @@ BINDIR = ./
 
 # Compiler rules
 CC=mpicc
-CFLAGS=-cc=icc -I$(INCDIR) -Wall -xHost -O3 -vec_report2
+# CFLAGS=-cc=icc -I$(INCDIR) -Wall -xHost -O3 -vec_report2
+CFLAGS=-Wall -I$(INCDIR)
 
 # Linker Flags and Libraries
 LDFLAGS=-limf -lgsl -lgslcblas
