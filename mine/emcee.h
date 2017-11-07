@@ -5,6 +5,7 @@
 #include "mpi.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <float.h>
 #include <math.h>
 #include <string.h>
