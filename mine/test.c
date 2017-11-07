@@ -8,8 +8,8 @@ int main( int argc, char ** argv )
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int nsteps=int(NSTEPS);
-    int nwalkers=int(NWALKERS);
+    int nsteps=(int)NSTEPS;
+    int nwalkers=(int)NWALKERS;
     int npars=(int)NPARS;
     int nwalkers_over_two=nwalkers/2;
 
