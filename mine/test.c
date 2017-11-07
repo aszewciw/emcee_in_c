@@ -33,7 +33,7 @@ int main( int argc, char ** argv )
     }
 
     ensemble *my_ensemble=allocate_ensemble(nwalkers,npars);
-    walker_pos *my_walkers=allocate_walkers(slice_length,npars);
+    walker_pos *my_walkers=allocate_walkers(slice_length);
 
     // have each chain fill its walker_pos with nonsense that we'll check later
     for(i=0; i<slice_length; i++){
