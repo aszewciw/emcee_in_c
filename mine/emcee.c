@@ -92,7 +92,8 @@ void free_ensemble(ensemble *e){
 /* -------------------------------------------------------------------------- */
 void free_chain(chain *c){
     int nsteps=c->nsteps;
-    for(int i=0; i<nsteps; i++){
+    int i;
+    for(i=0; i<nsteps; i++){
         free(c->ball_1[i].walker);
         free(c->ball_2[i].walker);
     }
