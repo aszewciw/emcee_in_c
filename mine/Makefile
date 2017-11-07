@@ -10,7 +10,8 @@ CC=mpicc
 CFLAGS=-Wall -I$(INCDIR)
 
 # Linker Flags and Libraries
-LDFLAGS=-limf -lgsl -lgslcblas
+# LDFLAGS=-limf -lgsl -lgslcblas
+LDFLAGS=
 LDLIBS=
 
 # Name of final Executable
