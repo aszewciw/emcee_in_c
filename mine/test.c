@@ -2,12 +2,13 @@
 
 int main( int argc, char ** argv )
 {
-    int nprocs,rank,i,j;
+    int nprocs,rank;
 
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+    int i,j;
     int nsteps=(int)NSTEPS;
     int nwalkers=(int)NWALKERS;
     int npars=(int)NPARS;
@@ -84,14 +85,14 @@ int main( int argc, char ** argv )
 
     for(i=0; i<nwalkers; i++){
         if(my_ensemble->walker[i].accept != 15){
-            fprintf(stderr, "Error in accept\n");
+            fprintf(stderr, "Error in accept: rank %d walker %d\n",rank,i);
         }
         if(my_ensemble->walker[i].lnprob != 279.6){
-            fprintf(stderr, "Error in lnprob\n");
+            fprintf(stderr, "Error in lnprob: rank %d walker %d\n",rank,i);
         }
         for(j=0; j<npars; j++){
             if(my_ensemble->walker[i].pars[j] != (double)(j)+342.1){
-                fprintf(stderr, "Error in pars\n");
+                fprintf(stderr, "Error in pars: rank %d walker %d par %d\n",rank,i,j);
             }
         }
     }
