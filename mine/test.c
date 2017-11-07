@@ -76,28 +76,26 @@ int main( int argc, char ** argv )
         }
         mpi_disp[i]=tmp_start;
         counts[i]=tmp_slice;
-        fprintf(stderr, "Rank %d Index %d mpi_disp %d counts %d\n", rank,i,tmp_start,tmp_slice);
     }
 
-    fprintf(stderr, "Rank %d, slice length %d\n", rank,slice_length);
 
-    // MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-    //              &my_ensemble->walker[0], counts, mpi_disp,
-    //              MPI_WALKER, MPI_COMM_WORLD);
+    MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+                 &my_ensemble->walker[0], counts, mpi_disp,
+                 MPI_WALKER, MPI_COMM_WORLD);
 
-    // for(i=0; i<nwalkers; i++){
-    //     if(my_ensemble->walker[i].accept != 15){
-    //         fprintf(stderr, "Error in accept: rank %d walker %d\n",rank,i);
-    //     }
-    //     if(my_ensemble->walker[i].lnprob != 279.6){
-    //         fprintf(stderr, "Error in lnprob: rank %d walker %d\n",rank,i);
-    //     }
-    //     for(j=0; j<npars; j++){
-    //         if(my_ensemble->walker[i].pars[j] != (double)(j)+342.1){
-    //             fprintf(stderr, "Error in pars: rank %d walker %d par %d\n",rank,i,j);
-    //         }
-    //     }
-    // }
+    for(i=0; i<nwalkers; i++){
+        if(my_ensemble->walker[i].accept != 15){
+            fprintf(stderr, "Error in accept: rank %d walker %d\n",rank,i);
+        }
+        if(my_ensemble->walker[i].lnprob != 279.6){
+            fprintf(stderr, "Error in lnprob: rank %d walker %d\n",rank,i);
+        }
+        for(j=0; j<npars; j++){
+            if(my_ensemble->walker[i].pars[j] != (double)(j)+342.1){
+                fprintf(stderr, "Error in pars: rank %d walker %d par %d\n",rank,i,j);
+            }
+        }
+    }
 
     if(rank==0) free_chain(my_chain);
     free_ensemble(my_ensemble);
