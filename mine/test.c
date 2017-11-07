@@ -66,7 +66,7 @@ int main( int argc, char ** argv )
     for(i=0; i<nprocs; i++)
     {
         tmp_slice=nwalkers/nprocs;
-        tmp_start=i*slice_length;
+        tmp_start=i*tmp_slice;
         if(i<remain){
             tmp_start+=i;
             tmp_slice++;
@@ -76,7 +76,7 @@ int main( int argc, char ** argv )
         }
         mpi_disp[i]=tmp_start;
         counts[i]=tmp_slice;
-        fprintf(stderr, "Index %d mpi_disp %d counts %d\n", i,tmp_start,tmp_slice);
+        fprintf(stderr, "Rank %d Index %d mpi_disp %d counts %d\n", rank,i,tmp_start,tmp_slice);
     }
 
     fprintf(stderr, "Rank %d, slice length %d\n", rank,slice_length);
