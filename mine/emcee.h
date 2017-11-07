@@ -28,8 +28,8 @@ typedef struct chain {
 } chain;
 
 walker_pos* allocate_walkers(int nwalkers);
-ensemble* allocate_ensemble(int nwalkers);
-chain* allocate_chain(int nsteps, int nwalkers);
+ensemble* allocate_ensemble(int nwalkers, int npars);
+chain* allocate_chain(int nsteps, int nwalkers, int npars);
 
 void free_walkers(walker_pos *w);
 void free_ensemble(ensemble *e);
