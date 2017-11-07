@@ -2,14 +2,14 @@
 
 int main( int argc, char ** argv )
 {
-    int nprocs,rank;
+    int nprocs,rank,i,j;
 
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int nsteps=5;
-    int nwalkers=6;
+    int nsteps=int(NSTEPS);
+    int nwalkers=int(NWALKERS);
     int npars=(int)NPARS;
     int nwalkers_over_two=nwalkers/2;
 
@@ -36,10 +36,10 @@ int main( int argc, char ** argv )
     walker_pos *my_walkers=allocate_walkers(slice_length,npars);
 
     // have each chain fill its walker_pos with nonsense that we'll check later
-    for(int i=0; i<slice_length; i++){
+    for(i=0; i<slice_length; i++){
         my_walkers[i].accept = 15;
         my_walkers[i].lnprob = 279.6;
-        for(int j=0; j<npars; j++){
+        for(j=0; j<npars; j++){
             my_walkers[i].pars[j] = (double)(j)+342.1;
         }
     }
@@ -62,7 +62,7 @@ int main( int argc, char ** argv )
     int counts[nprocs];
     int tmp_start, tmp_slice;
 
-    for(int i=0; i<nprocs; i++)
+    for(i=0; i<nprocs; i++)
     {
         tmp_slice=nwalkers/nprocs;
         tmp_start=i*slice_length;
@@ -82,14 +82,14 @@ int main( int argc, char ** argv )
                  &my_ensemble->walker[0], counts, mpi_disp,
                  MPI_WALKER, MPI_COMM_WORLD);
 
-    for(int i=0; i<nwalkers; i++){
+    for(i=0; i<nwalkers; i++){
         if(my_ensemble->walker[i].accept != 15){
             fprintf(stderr, "Error in accept\n");
         }
         if(my_ensemble->walker[i].lnprob != 279.6){
             fprintf(stderr, "Error in lnprob\n");
         }
-        for(int j=0; j<npars; j++){
+        for(j=0; j<npars; j++){
             if(my_ensemble->walker[i].pars[j] != (double)(j)+342.1){
                 fprintf(stderr, "Error in pars\n");
             }
