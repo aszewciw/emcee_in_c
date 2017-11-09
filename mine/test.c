@@ -21,7 +21,7 @@
 //     return lnprob;
 // }
 
-void run_chain(int * argc, char ***argv, ){
+void run_chain(int * argc, char ***argv){
     /*========================================================================*/
     /* MPI stuff */
     int nprocs, rank;
