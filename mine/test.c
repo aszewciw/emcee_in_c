@@ -22,18 +22,6 @@ int main( int argc, char ** argv )
     int slice_length, lower_ind, upper_ind, remain;
     int mpi_disp[nprocs], counts[nprocs];
     int tmp_start, tmp_slice;
-    int blocklen[3] = {1, 1, npars};
-
-    /* make an MPI custom structure */
-    MPI_Datatype MPI_WALKER;
-    MPI_Datatype type[3] = { MPI_INT, MPI_DOUBLE, MPI_DOUBLE };
-
-    MPI_Aint disp[3];
-    disp[0] = offsetof(walker_pos,accept);
-    disp[1] = offsetof(walker_pos,lnprob);
-    disp[2] = offsetof(walker_pos,pars);
-    MPI_Type_create_struct(3,blocklen,disp,type,&MPI_WALKER);
-    MPI_Type_commit(&MPI_WALKER);
 
     /*========================================================================*/
 
@@ -52,6 +40,20 @@ int main( int argc, char ** argv )
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Finalize();
     }
+
+    /*========================================================================*/
+
+    /* make an MPI custom structure */
+    int blocklen[3] = {1, 1, npars};
+    MPI_Datatype MPI_WALKER;
+    MPI_Datatype type[3] = { MPI_INT, MPI_DOUBLE, MPI_DOUBLE };
+    MPI_Aint disp[3];
+
+    disp[0] = offsetof(walker_pos,accept);
+    disp[1] = offsetof(walker_pos,lnprob);
+    disp[2] = offsetof(walker_pos,pars);
+    MPI_Type_create_struct(3,blocklen,disp,type,&MPI_WALKER);
+    MPI_Type_commit(&MPI_WALKER);
 
     /*========================================================================*/
 
