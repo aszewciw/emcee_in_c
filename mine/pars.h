@@ -4,6 +4,6 @@
 
 #define NPARS 35
 #define NSTEPS 5
-#define NWALKERS 1000
+#define NWALKERS 10
 
 #endif // #ifndef _PARS_HEADER_GUARD
