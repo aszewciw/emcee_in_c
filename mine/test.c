@@ -119,6 +119,7 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths){
     srand((unsigned) (time(&t)+rank));
     fprintf(stderr, "process: %d, rng: %d\n", rank, rand());
 
+    MPI_Barrier(MPI_COMM_WORLD);
     /* Have each process make its own guess. We'll overwrite it in a second */
     start_pos = make_guess(centers,widths,nwalkers,npars);
 
@@ -133,6 +134,7 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths){
             }
         }
         current_rank++;
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     /* Have process 0 send data to all others */
@@ -148,6 +150,7 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths){
             }
         }
         current_rank++;
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     /* fill with some data */
