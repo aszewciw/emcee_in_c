@@ -1,8 +1,3 @@
-// #include <stdlib.h>
-// #include <stdio.h>
-// #include <math.h>
-// #include <string.h>
-// #include "randn.h"
 #include "emcee.h"
 
 /* -------------------------------------------------------------------------- */
@@ -103,3 +98,27 @@ void free_chain(chain *c){
 }
 
 /* -------------------------------------------------------------------------- */
+struct walker_pos *make_guess(double *centers, double *widths, int nwalkers, int npars)
+{
+    int ipar, iwalker;
+    double center, width, val;
+    struct walker_pos *guess=allocate_walkers(nwalkers);
+
+    for (ipar=0; ipar<npars; ipar++) {
+
+        center = centers[ipar];
+        width = widths[ipar];
+
+        for (iwalker=0; iwalker<nwalkers; iwalker++) {
+            val = center+width*(rand_0to1()*2.0-1.0);
+            guess[iwalker].pars[ipar] = val;
+        }
+    }
+    return guess;
+}
+
+/* -------------------------------------------------------------------------- */
+double rand_0to1()
+{
+    return (double)rand() / (double)RAND_MAX ;
+}
