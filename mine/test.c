@@ -117,13 +117,13 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths){
 
     /* set up the rng here */
     srand((unsigned) (time(&t)+rank));
-    fprintf(stderr, "process: %d, rng: %d\n", rand());
+    fprintf(stderr, "process: %d, rng: %d\n", rank, rand());
 
     /* Have each process make its own guess. We'll overwrite it in a second */
     start_pos = make_guess(centers,widths,nwalkers,npars);
 
     int current_rank=0;
-    while(current_rank)<nprocs{
+    while(current_rank<nprocs){
         if(rank==current_rank){
             fprintf(stderr, "Rank %d\n", rank);
             for(iwalker=0;iwalker<nwalkers;iwalker++){
@@ -138,7 +138,7 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths){
     /* Have process 0 send data to all others */
     MPI_Bcast(&start_pos[0], nwalkers, MPI_WALKER, 0, MPI_COMM_WORLD);
     if(rank==0) fprintf(stderr, "\n");
-    while(current_rank)<nprocs{
+    while(current_rank<nprocs){
         if(rank==current_rank){
             fprintf(stderr, "Rank %d\n", rank);
             for(iwalker=0;iwalker<nwalkers;iwalker++){
@@ -183,7 +183,8 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths){
 
     /* free chain */
     if(rank==0) free_chain(my_chain);
-    free_ensemble(my_ensemble);
+    free_ensemble(ensemble_A);
+    free_ensemble(ensemble_B);
     free_walkers(my_walkers);
 
     /* end MPI */
@@ -194,7 +195,7 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths){
 int main( int argc, char ** argv )
 {
     double centers[NPARS] = {1.0,2.0};
-    double widths[NPARS] = {1.0,1.0}
+    double widths[NPARS] = {1.0,1.0};
 
     run_chain(&argc, &argv, centers, widths);
     return 0;
