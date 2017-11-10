@@ -140,6 +140,7 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths){
     /* Have process 0 send data to all others */
     MPI_Bcast(&start_pos[0], nwalkers, MPI_WALKER, 0, MPI_COMM_WORLD);
     if(rank==0) fprintf(stderr, "\n");
+    current_rank=0;
     while(current_rank<nprocs){
         if(rank==current_rank){
             fprintf(stderr, "Rank %d\n", rank);
