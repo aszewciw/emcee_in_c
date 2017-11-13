@@ -209,10 +209,46 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths,
         my_walkers[iwalker].lnprob=lnprob(pars,npars,userdata);
     }
 
+    current_rank=0;
+    while(current_rank<nprocs){
+        if (rank==current_rank){
+            fprintf(stderr, "\n\nRank: %d\n", rank);
+            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+                fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
+                        iwalker, ensemble_A->walker[iwalker].accept,
+                        ensemble_A->walker[iwalker].lnprob);
+                for(ipar=0;ipar<npars;ipar++){
+                    fprintf(stderr, "\t%lf", ensemble_A->walker[iwalker].pars[ipar]);
+                }
+                fprintf(stderr, "\n");
+            }
+        }
+        current_rank++;
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
     /* gather data from each proc */
     MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
                    &ensemble_A->walker[0], counts, mpi_disp,
                    MPI_WALKER, MPI_COMM_WORLD);
+
+    current_rank=0;
+    while(current_rank<nprocs){
+        if (rank==current_rank){
+            fprintf(stderr, "\n\nRank: %d\n", rank);
+            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+                fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
+                        iwalker, ensemble_A->walker[iwalker].accept,
+                        ensemble_A->walker[iwalker].lnprob);
+                for(ipar=0;ipar<npars;ipar++){
+                    fprintf(stderr, "\t%lf", ensemble_A->walker[iwalker].pars[ipar]);
+                }
+                fprintf(stderr, "\n");
+            }
+        }
+        current_rank++;
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 
     /*====================== burn in would happen here =======================*/
 
