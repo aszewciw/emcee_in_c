@@ -135,7 +135,7 @@ struct walker_pos *make_guess(double *centers, double *widths, int nwalkers, int
 int walker_accept(double lnprob_old,double lnprob_new,int npars,double z)
 {
     double lnprob_diff = (npars - 1.)*log(z) + lnprob_new - lnprob_old;
-    double r = randu();
+    double r = rand_0to1();
 
     if (lnprob_diff > log(r)) {
         return 1;
