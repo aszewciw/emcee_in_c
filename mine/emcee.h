@@ -42,7 +42,7 @@ double mca_randn();
 
 int walker_accept(double lnprob_old,double lnprob_new,int npars,double z);
 void step_walkers(walker_pos *walkers, ensemble *comp_walkers, int nwalkers,
-                  double a, double (*lnprob)(const double *, size_t, const void *),
+                  double a, double (*lnprob)(const double *, int, const void *),
                   const void *userdata);
 
 int rand_walker(int n);

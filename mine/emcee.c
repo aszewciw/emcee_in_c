@@ -145,7 +145,7 @@ int walker_accept(double lnprob_old,double lnprob_new,int npars,double z)
 }
 /* -------------------------------------------------------------------------- */
 void step_walkers(walker_pos *walkers, ensemble *comp_walkers, int nwalkers,
-                  double a, double (*lnprob)(const double *, size_t, const void *),
+                  double a, double (*lnprob)(const double *, int, const void *),
                   const void *userdata)
 {
     int iwalker,ipar,icomp;
@@ -171,7 +171,7 @@ void step_walkers(walker_pos *walkers, ensemble *comp_walkers, int nwalkers,
         lnprob_new = lnprob(pars_new,npars,userdata);
         accept = walker_accept(lnprob_old,lnprob_new,npars,z);
         walkers[iwalker].accept = accept;
-        if accept{
+        if(accept){
             walkers[iwalker].lnprob=lnprob_new;
             for(ipar=0; ipar<npars; ipar++){
                 walkers[iwalker].pars[ipar]=pars_new[ipar];
