@@ -161,7 +161,7 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths,
     while(current_rank<nprocs){
         if (rank==current_rank){
             fprintf(stderr, "\n\nRank: %d\n", rank);
-            for(iwalker=0;iwalker<nwalkers;iwalker++){
+            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
                 fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
                         iwalker, ensemble_B->walker[iwalker].accept,
                         ensemble_B->walker[iwalker].lnprob);
@@ -184,7 +184,7 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths,
     while(current_rank<nprocs){
         if (rank==current_rank){
             fprintf(stderr, "\n\nRank: %d\n", rank);
-            for(iwalker=0;iwalker<nwalkers;iwalker++){
+            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
                 fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
                         iwalker, ensemble_B->walker[iwalker].accept,
                         ensemble_B->walker[iwalker].lnprob);
