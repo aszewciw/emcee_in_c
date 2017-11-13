@@ -156,47 +156,47 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths,
         my_walkers[iwalker].lnprob=lnprob(pars,npars,userdata);
     }
 
-    int current_rank=0;
+    // int current_rank=0;
 
-    while(current_rank<nprocs){
-        if (rank==current_rank){
-            fprintf(stderr, "\n\nRank: %d\n", rank);
-            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
-                fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
-                        iwalker, ensemble_B->walker[iwalker].accept,
-                        ensemble_B->walker[iwalker].lnprob);
-                for(ipar=0;ipar<npars;ipar++){
-                    fprintf(stderr, "\t%lf", ensemble_B->walker[iwalker].pars[ipar]);
-                }
-                fprintf(stderr, "\n");
-            }
-        }
-        current_rank++;
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
+    // while(current_rank<nprocs){
+    //     if (rank==current_rank){
+    //         fprintf(stderr, "\n\nRank: %d\n", rank);
+    //         for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+    //             fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
+    //                     iwalker, ensemble_B->walker[iwalker].accept,
+    //                     ensemble_B->walker[iwalker].lnprob);
+    //             for(ipar=0;ipar<npars;ipar++){
+    //                 fprintf(stderr, "\t%lf", ensemble_B->walker[iwalker].pars[ipar]);
+    //             }
+    //             fprintf(stderr, "\n");
+    //         }
+    //     }
+    //     current_rank++;
+    //     MPI_Barrier(MPI_COMM_WORLD);
+    // }
 
     /* gather data from each proc */
     MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
                    &ensemble_B->walker[0], counts, mpi_disp,
                    MPI_WALKER, MPI_COMM_WORLD);
 
-    current_rank=0;
-    while(current_rank<nprocs){
-        if (rank==current_rank){
-            fprintf(stderr, "\n\nRank: %d\n", rank);
-            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
-                fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
-                        iwalker, ensemble_B->walker[iwalker].accept,
-                        ensemble_B->walker[iwalker].lnprob);
-                for(ipar=0;ipar<npars;ipar++){
-                    fprintf(stderr, "\t%lf", ensemble_B->walker[iwalker].pars[ipar]);
-                }
-                fprintf(stderr, "\n");
-            }
-        }
-        current_rank++;
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
+    // current_rank=0;
+    // while(current_rank<nprocs){
+    //     if (rank==current_rank){
+    //         fprintf(stderr, "\n\nRank: %d\n", rank);
+    //         for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+    //             fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
+    //                     iwalker, ensemble_B->walker[iwalker].accept,
+    //                     ensemble_B->walker[iwalker].lnprob);
+    //             for(ipar=0;ipar<npars;ipar++){
+    //                 fprintf(stderr, "\t%lf", ensemble_B->walker[iwalker].pars[ipar]);
+    //             }
+    //             fprintf(stderr, "\n");
+    //         }
+    //     }
+    //     current_rank++;
+    //     MPI_Barrier(MPI_COMM_WORLD);
+    // }
 
     /* Now we'll do ensemble_A */
     for(iwalker=0; iwalker<slice_length; iwalker++){
@@ -209,45 +209,59 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths,
         my_walkers[iwalker].lnprob=lnprob(pars,npars,userdata);
     }
 
-    current_rank=0;
-    while(current_rank<nprocs){
-        if (rank==current_rank){
-            fprintf(stderr, "\n\nRank: %d\n", rank);
-            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
-                fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
-                        iwalker, ensemble_A->walker[iwalker].accept,
-                        ensemble_A->walker[iwalker].lnprob);
-                for(ipar=0;ipar<npars;ipar++){
-                    fprintf(stderr, "\t%lf", ensemble_A->walker[iwalker].pars[ipar]);
-                }
-                fprintf(stderr, "\n");
-            }
-        }
-        current_rank++;
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
+    // current_rank=0;
+    // while(current_rank<nprocs){
+    //     if (rank==current_rank){
+    //         fprintf(stderr, "\n\nRank: %d\n", rank);
+    //         for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+    //             fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
+    //                     iwalker, ensemble_A->walker[iwalker].accept,
+    //                     ensemble_A->walker[iwalker].lnprob);
+    //             for(ipar=0;ipar<npars;ipar++){
+    //                 fprintf(stderr, "\t%lf", ensemble_A->walker[iwalker].pars[ipar]);
+    //             }
+    //             fprintf(stderr, "\n");
+    //         }
+    //     }
+    //     current_rank++;
+    //     MPI_Barrier(MPI_COMM_WORLD);
+    // }
 
     /* gather data from each proc */
     MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
                    &ensemble_A->walker[0], counts, mpi_disp,
                    MPI_WALKER, MPI_COMM_WORLD);
 
-    current_rank=0;
-    while(current_rank<nprocs){
-        if (rank==current_rank){
-            fprintf(stderr, "\n\nRank: %d\n", rank);
-            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
-                fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
-                        iwalker, ensemble_A->walker[iwalker].accept,
-                        ensemble_A->walker[iwalker].lnprob);
-                for(ipar=0;ipar<npars;ipar++){
-                    fprintf(stderr, "\t%lf", ensemble_A->walker[iwalker].pars[ipar]);
-                }
-                fprintf(stderr, "\n");
+    // current_rank=0;
+    // while(current_rank<nprocs){
+    //     if (rank==current_rank){
+    //         fprintf(stderr, "\n\nRank: %d\n", rank);
+    //         for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+    //             fprintf(stderr, "Walker %d, accept %d, lnprob %lf\n",
+    //                     iwalker, ensemble_A->walker[iwalker].accept,
+    //                     ensemble_A->walker[iwalker].lnprob);
+    //             for(ipar=0;ipar<npars;ipar++){
+    //                 fprintf(stderr, "\t%lf", ensemble_A->walker[iwalker].pars[ipar]);
+    //             }
+    //             fprintf(stderr, "\n");
+    //         }
+    //     }
+    //     current_rank++;
+    //     MPI_Barrier(MPI_COMM_WORLD);
+    // }
+
+    /* fill first step of chain */
+    if(rank==0){
+        for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+            my_chain->ball_1[0].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
+            my_chain->ball_1[0].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
+            my_chain->ball_2[0].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
+            my_chain->ball_2[0].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
+            for(ipar=0;ipar<npars;ipar++){
+                my_chain->ball_1[0].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
+                my_chain->ball_2[0].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
             }
         }
-        current_rank++;
-        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     /*====================== burn in would happen here =======================*/
@@ -255,6 +269,10 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths,
 
     /*========================================================================*/
     /* begin the chain */
+    // for(istep=1; istep<nsteps; istep++){
+
+
+    // }
 
 
     /*========================================================================*/
