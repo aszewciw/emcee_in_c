@@ -165,7 +165,7 @@ void step_walkers(walker_pos *walkers, ensemble *comp_walkers, int nwalkers,
         for(ipar=0; ipar<npars; ipar++){
             par_old = walkers[iwalker].pars[ipar];
             par_comp = comp_walkers->walker[icomp].pars[ipar];
-            pars_new[i] = par_comp - z*(par_comp-par_old);
+            pars_new[ipar] = par_comp - z*(par_comp-par_old);
         }
 
         lnprob_new = lnprob(pars_new,npars,userdata);
