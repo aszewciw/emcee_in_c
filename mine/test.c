@@ -219,7 +219,10 @@ int main( int argc, char ** argv )
     mydata.data = (const double*) data;
     mydata.ivar = 1/(err*err);
 
-    run_chain(&argc, &argv, centers, widths, &lnprob, &mydata);
+    guess[0] = truepars[0] + err*mca_randn();
+    ballsize[0] = 1.0;
+
+    run_chain(&argc, &argv, guess, ballsize, &lnprob, &mydata);
     return 0;
 }
 
