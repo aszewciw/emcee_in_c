@@ -122,3 +122,20 @@ double rand_0to1()
 {
     return (double)rand() / (double)RAND_MAX ;
 }
+
+/* -------------------------------------------------------------------------- */
+double mca_randn()
+{
+    double x1, x2, w, y1;//, y2;
+
+    do {
+        x1 = 2.*rand_0to1() - 1.0;
+        x2 = 2.*rand_0to1() - 1.0;
+        w = x1*x1 + x2*x2;
+    } while ( w >= 1.0 );
+
+    w = sqrt( (-2.*log( w ) ) / w );
+    y1 = x1*w;
+    //y2 = x2*w;
+    return y1;
+}

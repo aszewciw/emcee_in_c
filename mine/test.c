@@ -199,10 +199,27 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths,
 
 int main( int argc, char ** argv )
 {
-    double centers[NPARS] = {1.0,2.0};
-    double widths[NPARS] = {1.0,1.0};
+    int ndata=10;
+    int i;
 
-    run_chain(&argc, &argv, centers, widths);
+    double truepars[1] = {1};
+    double guess[1] = {0};
+    double ballsize[1] = {0};
+    double fracerr=0.1;
+
+    double err=fracerr*truepars[0];
+
+    double *data = malloc(ndata*sizeof(double));
+    for(i=0; i<ndata; i++) {
+        data[i] = truepars[0] + err*mca_randn();
+    }
+
+    struct mydata mydata;
+    mydata.ndata = ndata;
+    mydata.data = (const double*) data;
+    mydata.ivar = 1/(err*err);
+
+    run_chain(&argc, &argv, centers, widths, &lnprob, &mydata);
     return 0;
 }
 
