@@ -116,7 +116,69 @@ struct walker_pos *make_guess(double *centers, double *widths, int nwalkers, int
     }
     return guess;
 }
+/* -------------------------------------------------------------------------- */
+// void stretch_move(double z, int npars, const double *pars_old, const double *pars_comp,
+//                   double *pars_new)
+// {
+//     int i;
+//     double val, cval;
 
+//     for (i=0; i<npars; i++) {
+
+//         double val=pars_old[i];
+//         double cval=pars_comp[i];
+
+//         pars_new[i] = cval - z*(cval-val);
+//     }
+// }
+/* -------------------------------------------------------------------------- */
+int walker_accept(double lnprob_old,double lnprob_new,int npars,double z)
+{
+    double lnprob_diff = (npars - 1.)*log(z) + lnprob_new - lnprob_old;
+    double r = randu();
+
+    if (lnprob_diff > log(r)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+/* -------------------------------------------------------------------------- */
+void step_walkers(walker_pos *walkers, ensemble *comp_walkers, int nwalkers,
+                  double a, double (*lnprob)(const double *, size_t, const void *),
+                  const void *userdata)
+{
+    int iwalker,ipar,icomp;
+    int npars,ncomp,accept;
+    double par_old, par_comp;
+    double pars_new[NPARS];
+    double lnprob_old,lnprob_new,z;
+
+    ncomp=comp_walkers->nwalkers;
+    npars=comp_walkers->npars;
+
+    for(iwalker=0; iwalker<nwalkers; iwalker++){
+        lnprob_old = walkers[iwalker].lnprob;
+        icomp = rand_walker(ncomp);
+        z = rand_gofz(a);
+
+        for(ipar=0; ipar<npars; ipar++){
+            par_old = walkers[iwalker].pars[ipar];
+            par_comp = comp_walkers->walker[icomp].pars[ipar];
+            pars_new[i] = par_comp - z*(par_comp-par_old);
+        }
+
+        lnprob_new = lnprob(pars_new,npars,userdata);
+        accept = walker_accept(lnprob_old,lnprob_new,npars,z);
+        walkers[iwalker].accept = accept;
+        if accept{
+            walkers[iwalker].lnprob=lnprob_new;
+            for(ipar=0; ipar<npars; ipar++){
+                walkers[iwalker].pars[ipar]=pars_new[ipar];
+            }
+        }
+    }
+}
 /* -------------------------------------------------------------------------- */
 double rand_0to1()
 {
@@ -138,4 +200,24 @@ double mca_randn()
     y1 = x1*w;
     //y2 = x2*w;
     return y1;
+}
+
+/* -------------------------------------------------------------------------- */
+int rand_walker(int n)
+{
+    /* fix this later for sake of uniformity */
+    int i=rand()%n;
+    return i;
+}
+
+/* -------------------------------------------------------------------------- */
+double rand_gofz(double a)
+{
+    // ( (a-1) rand + 1 )^2 / a;
+
+    double z = (a - 1.)*rand_0to1() + 1.;
+
+    z = z*z/a;
+
+    return z;
 }

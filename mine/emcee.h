@@ -40,4 +40,12 @@ struct walker_pos *make_guess(double *centers, double *widths, int nwalkers, int
 double rand_0to1();
 double mca_randn();
 
+int walker_accept(double lnprob_old,double lnprob_new,int npars,double z);
+void step_walkers(walker_pos *walkers, ensemble *comp_walkers, int nwalkers,
+                  double a, double (*lnprob)(const double *, size_t, const void *),
+                  const void *userdata);
+
+int rand_walker(int n);
+double rand_gofz(double a);
+
 #endif //#ifndef _EMCEE_HEADER_GUARD

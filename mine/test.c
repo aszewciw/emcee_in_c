@@ -25,7 +25,7 @@ double lnprob(const double *pars, int npars, const void *userdata)
     return lnprob;
 }
 
-void run_chain(int *argc, char ***argv, double *centers, double *widths,
+void run_chain(int *argc, char ***argv, double a, double *centers, double *widths,
                double (*lnprob)(const double *, int, const void *),
                const void *userdata)
 {
@@ -269,10 +269,61 @@ void run_chain(int *argc, char ***argv, double *centers, double *widths,
 
     /*========================================================================*/
     /* begin the chain */
-    // for(istep=1; istep<nsteps; istep++){
+    for(istep=1; istep<nsteps; istep++){
+
+        /* set walkers to positions for ensemble_A */
+        for(iwalker=0; iwalker<slice_length; iwalker++){
+            iensemble = iwalker+lower_ind;
+            my_walkers[iwalker].accept = ensemble_A->walker[iensemble].accept;
+            my_walkers[iwalker].lnprob = ensemble_A->walker[iensemble].lnprob;
+            for(ipar=0; ipar<npars; ipar++){
+                my_walkers[iwalker].pars[ipar] = ensemble_A->walker[iensemble].pars[ipar];
+            }
+        }
+        /* move my_walkers based on ensemble_B */
+
+        step_walkers(my_walkers, ensemble_B, slice_length, a, lnprob, userdata);
+
+        /* allgatherv new positions of A */
+        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+                       &ensemble_A->walker[0], counts, mpi_disp,
+                       MPI_WALKER, MPI_COMM_WORLD);
+
+        /* set walkers to positions for ensemble_B */
+        for(iwalker=0; iwalker<slice_length; iwalker++){
+            iensemble = iwalker+lower_ind;
+            my_walkers[iwalker].accept = ensemble_B->walker[iensemble].accept;
+            my_walkers[iwalker].lnprob = ensemble_B->walker[iensemble].lnprob;
+            for(ipar=0; ipar<npars; ipar++){
+                my_walkers[iwalker].pars[ipar] = ensemble_B->walker[iensemble].pars[ipar];
+            }
+        }
+
+        /* move ensemble_B based on ensemble_A */
+        step_walkers(my_walkers, ensemble_A, slice_length, a, lnprob, userdata);
 
 
-    // }
+        /* allgatherv new positions of B */
+        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+                       &ensemble_B->walker[0], counts, mpi_disp,
+                       MPI_WALKER, MPI_COMM_WORLD);
+
+        /* put A and B in chain */
+        /* fill step of chain */
+        if(rank==0){
+            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+                my_chain->ball_1[istep].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
+                my_chain->ball_1[istep].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
+                my_chain->ball_2[istep].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
+                my_chain->ball_2[istep].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
+                for(ipar=0;ipar<npars;ipar++){
+                    my_chain->ball_1[istep].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
+                    my_chain->ball_2[istep].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
+                }
+            }
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 
 
     /*========================================================================*/
@@ -292,6 +343,7 @@ int main( int argc, char ** argv )
 {
     int ndata=10;
     int i;
+    double a=2.0;
 
     double truepars[1] = {1};
     double guess[1] = {0};
@@ -313,7 +365,7 @@ int main( int argc, char ** argv )
     guess[0] = truepars[0] + err*mca_randn();
     ballsize[0] = 1.0;
 
-    run_chain(&argc, &argv, guess, ballsize, &lnprob, &mydata);
+    run_chain(&argc, &argv, a, guess, ballsize, &lnprob, &mydata);
     return 0;
 }
 
