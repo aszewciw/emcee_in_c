@@ -249,20 +249,20 @@ int write_chain(const struct chain *c, const char *fname)
                     c->ball_1[istep].walker[iwalker].accept,
                     c->ball_1[istep].walker[iwalker].lnprob);
             for(ipar=0; ipar<npars; ipar++){
-                fprintf(stream,"%.16g\t",
+                fprintf(file,"%.16g\t",
                         c->ball_1[istep].walker[iwalker].pars[ipar]);
             }
-            fprintf(stream,"\n");
+            fprintf(file,"\n");
         }
         for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
             fprintf(file,"%d\t%.16g\t",
                     c->ball_2[istep].walker[iwalker].accept,
                     c->ball_2[istep].walker[iwalker].lnprob);
             for(ipar=0; ipar<npars; ipar++){
-                fprintf(stream,"%.16g\t",
+                fprintf(file,"%.16g\t",
                         c->ball_2[istep].walker[iwalker].pars[ipar]);
             }
-            fprintf(stream,"\n");
+            fprintf(file,"\n");
         }
     }
 
