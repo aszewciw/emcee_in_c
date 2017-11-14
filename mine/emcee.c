@@ -221,3 +221,51 @@ double rand_gofz(double a)
 
     return z;
 }
+
+/* -------------------------------------------------------------------------- */
+int write_chain(const struct chain *c, const char *fname)
+{
+    int nwalkers, nsteps, npars, nwalkers_over_two;
+    int istep,iwalker,ipar;
+
+    nsteps = c->nsteps;
+    nwalkers_over_two = c->ball_1[0].nwalkers;
+    nwalkers = nwalkers_over_two*2;
+    npars = c->ball_1[0].npars;
+
+
+    FILE *file=fopen(fname,"w");
+    if (file==NULL) {
+        fprintf(stderr,"Error: could not open file '%s'\n", fname);
+        return 0;
+    }
+
+    fprintf(file, "# nsteps\tnwalkers\tnpars\n");
+    fprintf(file,"%d\t%d\t%d\n", nsteps, nwalkers, npars);
+    fprintf(file, "# accept\tlnprob\tpars\n");
+    for (istep=0; istep<nsteps; istep++) {
+        for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
+            fprintf(file,"%d\t%.16g\t",
+                    c->ball_1[istep].walker[iwalker].accept,
+                    c->ball_1[istep].walker[iwalker].lnprob);
+            for(ipar=0; ipar<npars; ipar++){
+                fprintf(stream,"%.16g\t",
+                        c->ball_1[istep].walker[iwalker].pars[ipar]);
+            }
+            fprintf(stream,"\n");
+        }
+        for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
+            fprintf(file,"%d\t%.16g\t",
+                    c->ball_2[istep].walker[iwalker].accept,
+                    c->ball_2[istep].walker[iwalker].lnprob);
+            for(ipar=0; ipar<npars; ipar++){
+                fprintf(stream,"%.16g\t",
+                        c->ball_2[istep].walker[iwalker].pars[ipar]);
+            }
+            fprintf(stream,"\n");
+        }
+    }
+
+    fclose(file);
+    return 1;
+}

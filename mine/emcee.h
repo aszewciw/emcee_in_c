@@ -41,6 +41,7 @@ double rand_0to1();
 double mca_randn();
 
 int walker_accept(double lnprob_old,double lnprob_new,int npars,double z);
+int write_chain(const struct chain *c, const char *fname);
 void step_walkers(walker_pos *walkers, ensemble *comp_walkers, int nwalkers,
                   double a, double (*lnprob)(const double *, int, const void *),
                   const void *userdata);

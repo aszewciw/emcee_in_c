@@ -27,7 +27,7 @@ double lnprob(const double *pars, int npars, const void *userdata)
 
 void run_chain(int *argc, char ***argv, double a, double *centers, double *widths,
                double (*lnprob)(const double *, int, const void *),
-               const void *userdata)
+               const void *userdata, const char *fname)
 {
     /*========================================================================*/
     /* MPI stuff */
@@ -325,7 +325,11 @@ void run_chain(int *argc, char ***argv, double a, double *centers, double *width
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
+    /*========================================================================*/
+    /* write file */
+    if(rank==0) write_chain(my_chain, fname);
 
+    MPI_Barrier(MPI_COMM_WORLD);
     /*========================================================================*/
 
     /* free chain */
@@ -365,7 +369,8 @@ int main( int argc, char ** argv )
     guess[0] = truepars[0] + err*mca_randn();
     ballsize[0] = 1.0;
 
-    run_chain(&argc, &argv, a, guess, ballsize, &lnprob, &mydata);
+    const char fname[]="chain.dat"
+    run_chain(&argc, &argv, a, guess, ballsize, &lnprob, &mydata, fname);
     return 0;
 }
 
