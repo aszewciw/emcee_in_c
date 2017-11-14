@@ -369,7 +369,7 @@ int main( int argc, char ** argv )
     guess[0] = truepars[0] + err*mca_randn();
     ballsize[0] = 1.0;
 
-    const char fname[]="chain.dat"
+    const char fname[]="chain.dat";
     run_chain(&argc, &argv, a, guess, ballsize, &lnprob, &mydata, fname);
     return 0;
 }
