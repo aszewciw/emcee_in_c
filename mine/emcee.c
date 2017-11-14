@@ -269,3 +269,250 @@ int write_chain(const struct chain *c, const char *fname)
     fclose(file);
     return 1;
 }
+
+
+void run_chain(int *argc, char ***argv, double a, double *centers, double *widths,
+               double (*lnprob)(const double *, int, const void *),
+               const void *userdata, const char *fname)
+{
+    /*========================================================================*/
+    /* MPI stuff */
+    int nprocs, rank;
+    MPI_Init(argc,argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    /* generic indices */
+    int iproc, iwalker, ipar, istep, iensemble;
+
+    /* chain things */
+    int nsteps, nwalkers, npars, nwalkers_over_two;
+    double *pars;
+    ensemble *ensemble_A, *ensemble_B;
+    walker_pos *my_walkers, *start_pos;
+    chain *my_chain;
+
+    /* more MPI stuff */
+    int slice_length, lower_ind, upper_ind, remain;
+    int mpi_disp[nprocs], counts[nprocs];
+    int tmp_start, tmp_slice;
+
+    /* rng */
+    time_t t;
+
+    /*========================================================================*/
+    /* Set up basic chain parameters */
+    nsteps   = (int)NSTEPS;
+    nwalkers = (int)NWALKERS;
+    npars    = (int)NPARS;
+    if(nwalkers%2==1) nwalkers++;   // make nwalkers even
+
+    nwalkers_over_two = nwalkers/2;
+
+    if(nprocs>nwalkers_over_two){
+        if(rank==0){
+            fprintf(stderr, "Attempting to split a 'half-ensemble' of %d walkers across %d processes is silly.\n",
+                    nwalkers_over_two, nprocs);
+            fprintf(stderr, "I don't know how to do that. Change the values in the 'pars.h' file\n");
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Finalize();
+        exit(EXIT_FAILURE);
+    }
+
+    /*========================================================================*/
+    /* make an MPI custom structure */
+    int blocklen[3] = {1, 1, npars};
+    MPI_Datatype MPI_WALKER;
+    MPI_Datatype type[3] = { MPI_INT, MPI_DOUBLE, MPI_DOUBLE };
+    MPI_Aint disp[3];
+
+    disp[0] = offsetof(walker_pos,accept);
+    disp[1] = offsetof(walker_pos,lnprob);
+    disp[2] = offsetof(walker_pos,pars);
+    MPI_Type_create_struct(3,blocklen,disp,type,&MPI_WALKER);
+    MPI_Type_commit(&MPI_WALKER);
+
+    /*========================================================================*/
+
+    /* Establish slice of walkers for each process to handle */
+    remain=nwalkers_over_two%nprocs;
+
+    /* Fill mpi_disp and counts for MPI comm */
+    for(iproc=0; iproc<nprocs; iproc++)
+    {
+        slice_length = nwalkers_over_two/nprocs;
+        lower_ind = iproc*slice_length;
+        if(iproc<remain){
+            lower_ind+=iproc;
+            slice_length++;
+        }
+        else{
+            lower_ind+=remain;
+        }
+        mpi_disp[iproc] = lower_ind;
+        counts[iproc] = slice_length;
+    }
+
+    /* Have each proc set its slice indices */
+    lower_ind = mpi_disp[rank];
+    slice_length = counts[rank];
+    upper_ind = lower_ind + slice_length;
+
+    /*========================================================================*/
+
+    /* set up chain, ensembles, walkers */
+    if (rank==0) my_chain = allocate_chain(nsteps,nwalkers,npars);
+
+    ensemble_A = allocate_ensemble(nwalkers_over_two,npars);
+    ensemble_B = allocate_ensemble(nwalkers_over_two,npars);
+
+    my_walkers = allocate_walkers(slice_length);
+
+    /*========================================================================*/
+
+    /* Get things ready to begin the chain */
+    /* set up the rng here */
+    srand((unsigned)(time(&t))+rank);
+
+    /* Have each process make its own guess. We'll overwrite it in a second */
+    start_pos = make_guess(centers,widths,nwalkers,npars);
+
+    /* Have process 0 send data to all others */
+    MPI_Bcast(&start_pos[0], nwalkers, MPI_WALKER, 0, MPI_COMM_WORLD);
+
+    /* Fill the two ensembles with walker positions */
+    for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
+        for(ipar=0; ipar<npars; ipar++){
+            ensemble_A->walker[iwalker].pars[ipar]=start_pos[iwalker].pars[ipar];
+            ensemble_B->walker[iwalker].pars[ipar]=start_pos[iwalker+nwalkers_over_two].pars[ipar];
+        }
+    }
+
+    /* Fill each proc's walkers with appropriate starting positions */
+    /* We'll first do ensemble_B */
+    /* also calculate lnprob */
+    for(iwalker=0; iwalker<slice_length; iwalker++){
+        iensemble = iwalker+lower_ind;
+        for(ipar=0; ipar<npars; ipar++){
+            my_walkers[iwalker].pars[ipar] = ensemble_B->walker[iensemble].pars[ipar];
+        }
+        my_walkers[iwalker].accept=1;
+        pars=my_walkers[iwalker].pars;
+        my_walkers[iwalker].lnprob=lnprob(pars,npars,userdata);
+    }
+
+    /* gather data from each proc */
+    MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+                   &ensemble_B->walker[0], counts, mpi_disp,
+                   MPI_WALKER, MPI_COMM_WORLD);
+
+
+    /* Now we'll do ensemble_A */
+    for(iwalker=0; iwalker<slice_length; iwalker++){
+        iensemble = iwalker+lower_ind;
+        for(ipar=0; ipar<npars; ipar++){
+            my_walkers[iwalker].pars[ipar] = ensemble_A->walker[iensemble].pars[ipar];
+        }
+        my_walkers[iwalker].accept=1;
+        pars=my_walkers[iwalker].pars;
+        my_walkers[iwalker].lnprob=lnprob(pars,npars,userdata);
+    }
+
+    /* gather data from each proc */
+    MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+                   &ensemble_A->walker[0], counts, mpi_disp,
+                   MPI_WALKER, MPI_COMM_WORLD);
+
+    /* fill first step of chain */
+    if(rank==0){
+        for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+            my_chain->ball_1[0].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
+            my_chain->ball_1[0].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
+            my_chain->ball_2[0].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
+            my_chain->ball_2[0].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
+            for(ipar=0;ipar<npars;ipar++){
+                my_chain->ball_1[0].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
+                my_chain->ball_2[0].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
+            }
+        }
+    }
+
+    /*====================== burn in would happen here =======================*/
+
+
+    /*========================================================================*/
+    /* begin the chain */
+    for(istep=1; istep<nsteps; istep++){
+
+        /* set walkers to positions for ensemble_A */
+        for(iwalker=0; iwalker<slice_length; iwalker++){
+            iensemble = iwalker+lower_ind;
+            my_walkers[iwalker].accept = ensemble_A->walker[iensemble].accept;
+            my_walkers[iwalker].lnprob = ensemble_A->walker[iensemble].lnprob;
+            for(ipar=0; ipar<npars; ipar++){
+                my_walkers[iwalker].pars[ipar] = ensemble_A->walker[iensemble].pars[ipar];
+            }
+        }
+        /* move my_walkers based on ensemble_B */
+
+        step_walkers(my_walkers, ensemble_B, slice_length, a, lnprob, userdata);
+
+        /* allgatherv new positions of A */
+        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+                       &ensemble_A->walker[0], counts, mpi_disp,
+                       MPI_WALKER, MPI_COMM_WORLD);
+
+        /* set walkers to positions for ensemble_B */
+        for(iwalker=0; iwalker<slice_length; iwalker++){
+            iensemble = iwalker+lower_ind;
+            my_walkers[iwalker].accept = ensemble_B->walker[iensemble].accept;
+            my_walkers[iwalker].lnprob = ensemble_B->walker[iensemble].lnprob;
+            for(ipar=0; ipar<npars; ipar++){
+                my_walkers[iwalker].pars[ipar] = ensemble_B->walker[iensemble].pars[ipar];
+            }
+        }
+
+        /* move ensemble_B based on ensemble_A */
+        step_walkers(my_walkers, ensemble_A, slice_length, a, lnprob, userdata);
+
+
+        /* allgatherv new positions of B */
+        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+                       &ensemble_B->walker[0], counts, mpi_disp,
+                       MPI_WALKER, MPI_COMM_WORLD);
+
+        /* put A and B in chain */
+        /* fill step of chain */
+        if(rank==0){
+            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+                my_chain->ball_1[istep].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
+                my_chain->ball_1[istep].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
+                my_chain->ball_2[istep].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
+                my_chain->ball_2[istep].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
+                for(ipar=0;ipar<npars;ipar++){
+                    my_chain->ball_1[istep].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
+                    my_chain->ball_2[istep].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
+                }
+            }
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    /*========================================================================*/
+    /* write file */
+    if(rank==0) write_chain(my_chain, fname);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    /*========================================================================*/
+
+    /* free chain */
+    if(rank==0) free_chain(my_chain);
+    free_ensemble(ensemble_A);
+    free_ensemble(ensemble_B);
+    free_walkers(my_walkers);
+
+    /* end MPI */
+    MPI_Type_free(&MPI_WALKER);
+    MPI_Finalize();
+}
