@@ -16,6 +16,7 @@ double lnprob(const double *pars, int npars, const void *userdata)
     diff=0;
 
     for (i=0; i<mydata->ndata; i++) {
+        fprintf(stderr, "data %d is %lf\n", i,mydata->data[i]);
         diff = mydata->data[i]-pars[0];
         chi2 += diff*diff*mydata->ivar;
     }
