@@ -25,7 +25,7 @@ def main():
     plt.clf()
     plt.figure(1)
     plt_name = 'nd_gaussian_chain_pyversion_contours.png'
-    fig = corner.corner(steps,levels=levels,color='r',quantiles=quantiles,
+    fig = corner.corner(steps,levels=levels,color='g',quantiles=quantiles,
                         plot_density=False,plot_datapoints=False,truths=truths,
                         fill_contours=True)
     plt.savefig(plt_name)
