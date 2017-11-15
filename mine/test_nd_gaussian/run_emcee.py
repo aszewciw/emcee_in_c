@@ -30,8 +30,6 @@ p0 = np.random.rand(ndim * nwalkers).reshape((nwalkers, ndim))
 
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=[means, icov])
 
-lnprob(p, means, icov)
-
 sampler.run_mcmc(p0, 4000)
 
 np.savetxt(chain_fname,sampler.flatchain)
