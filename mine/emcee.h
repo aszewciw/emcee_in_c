@@ -36,7 +36,7 @@ void free_walkers(walker_pos *w);
 void free_ensemble(ensemble *e);
 void free_chain(chain *c);
 
-struct walker_pos *make_guess(double *centers, double *widths, int nwalkers, int npars);
+walker_pos* make_guess(double *centers, double *widths, int nwalkers, int npars);
 double rand_0to1();
 double mca_randn();
 

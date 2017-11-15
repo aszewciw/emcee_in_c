@@ -1,25 +1,25 @@
 #include "emcee.h"
 
-struct mydata {
+typedef struct mydata {
     int ndata;
     const double *data;
     double ivar; // same error for each
-};
+} mydata;
 
 double lnprob(const double *pars, int npars, const void *userdata)
 {
     int i;
     double chi2,diff,lnprob;
-    const struct mydata *mydata = userdata;
+    const mydata *data = userdata;
 
     chi2=0;
     diff=0;
 
     // fprintf(stderr, "data 0 is %lf\n", mydata->data[0]);
     // fprintf(stderr, "data 1 is %lf\n", mydata->data[1]);
-    for (i=0; i<mydata->ndata; i++) {
-        diff = mydata->data[i]-pars[0];
-        chi2 += diff*diff*mydata->ivar;
+    for (i=0; i<data->ndata; i++) {
+        diff = data->data[i]-pars[0];
+        chi2 += diff*diff*data->ivar;
     }
 
     lnprob = -0.5*chi2;
@@ -37,23 +37,28 @@ int main( int argc, char ** argv )
     double guess[1] = {0};
     double ballsize[1] = {0};
     double fracerr=0.1;
+    walker_pos *start_pos;
 
     double err=fracerr*truepars[0];
 
-    double *data = malloc(ndata*sizeof(double));
+    double *data_val = malloc(ndata*sizeof(double));
     for(i=0; i<ndata; i++) {
-        data[i] = truepars[0] + err*mca_randn();
+        data_val[i] = truepars[0] + err*mca_randn();
     }
 
-    struct mydata mydata;
-    mydata.ndata = ndata;
-    mydata.data = (const double*) data;
-    mydata.ivar = 1/(err*err);
+    mydata data;
+    data.ndata = ndata;
+    data.data = (const double*) data_val;
+    data.ivar = 1/(err*err);
 
     guess[0] = truepars[0] + err*mca_randn();
     ballsize[0] = 1.0;
 
+    start_pos = make_guess(guess, ballsize, nwalkers, npars);
+
     const char fname[]="chain.dat";
-    run_chain(&argc, &argv, a, guess, ballsize, &lnprob, &mydata, fname);
+    run_chain(&argc, &argv, start_pos, a, &lnprob, &mydata, fname);
+    free(data);
+    free(start_pos);
     return 0;
 }

@@ -98,11 +98,11 @@ void free_chain(chain *c){
 }
 
 /* -------------------------------------------------------------------------- */
-struct walker_pos *make_guess(double *centers, double *widths, int nwalkers, int npars)
+walker_pos *make_guess(double *centers, double *widths, int nwalkers, int npars)
 {
     int ipar, iwalker;
     double center, width, val;
-    struct walker_pos *guess=allocate_walkers(nwalkers);
+    walker_pos * guess=allocate_walkers(nwalkers);
 
     for (ipar=0; ipar<npars; ipar++) {
 
