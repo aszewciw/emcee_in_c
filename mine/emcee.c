@@ -240,9 +240,9 @@ int write_chain(const struct chain *c, const char *fname)
         return 0;
     }
 
-    fprintf(file, "# nsteps\tnwalkers\tnpars\n");
+    fprintf(file, "# nsteps nwalkers npars\n");
     fprintf(file,"%d\t%d\t%d\n", nsteps, nwalkers, npars);
-    fprintf(file, "# accept\tlnprob\tpars\n");
+    fprintf(file, "# accept lnprob pars\n");
     for (istep=0; istep<nsteps; istep++) {
         for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
             fprintf(file,"%d\t%.16g\t",
@@ -271,7 +271,7 @@ int write_chain(const struct chain *c, const char *fname)
 }
 
 
-void run_chain(int *argc, char ***argv, double a, double *centers, double *widths,
+void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                double (*lnprob)(const double *, int, const void *),
                const void *userdata, const char *fname)
 {
@@ -289,7 +289,7 @@ void run_chain(int *argc, char ***argv, double a, double *centers, double *width
     int nsteps, nwalkers, npars, nwalkers_over_two;
     double *pars;
     ensemble *ensemble_A, *ensemble_B;
-    walker_pos *my_walkers, *start_pos;
+    walker_pos *my_walkers;
     chain *my_chain;
 
     /* more MPI stuff */
@@ -375,11 +375,8 @@ void run_chain(int *argc, char ***argv, double a, double *centers, double *width
     /* set up the rng here */
     srand((unsigned)(time(&t))+rank);
 
-    /* Have each process make its own guess. We'll overwrite it in a second */
-    start_pos = make_guess(centers,widths,nwalkers,npars);
-
     /* Have process 0 send data to all others */
-    MPI_Bcast(&start_pos[0], nwalkers, MPI_WALKER, 0, MPI_COMM_WORLD);
+    // MPI_Bcast(&start_pos[0], nwalkers, MPI_WALKER, 0, MPI_COMM_WORLD);
 
     /* Fill the two ensembles with walker positions */
     for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){

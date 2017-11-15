@@ -48,7 +48,7 @@ void step_walkers(walker_pos *walkers, ensemble *comp_walkers, int nwalkers,
 
 int rand_walker(int n);
 double rand_gofz(double a);
-void run_chain(int *argc, char ***argv, double a, double *centers, double *widths,
+void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                double (*lnprob)(const double *, int, const void *),
                const void *userdata, const char *fname);
 
