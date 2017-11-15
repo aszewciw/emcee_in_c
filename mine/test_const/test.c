@@ -29,7 +29,7 @@ double lnprob(const double *pars, int npars, const void *userdata)
 
 int main( int argc, char ** argv )
 {
-    int ndata=10;
+    int ndata=100;
     int i, npars, nwalkers;
     double a=2.0;
 
