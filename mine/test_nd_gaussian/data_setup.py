@@ -7,7 +7,7 @@ import numpy as np
 data_fname = 'means.dat'
 icov_fname = 'icov.dat'
 guesses_fname = 'guesses.dat'
-ndim = 50
+ndim = 5
 
 # ensure reproducibility for tests against python emcee
 rseed = 10
