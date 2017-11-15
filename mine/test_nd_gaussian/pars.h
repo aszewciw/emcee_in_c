@@ -2,8 +2,8 @@
 #ifndef _PARS_HEADER_GUARD
 #define _PARS_HEADER_GUARD
 
-#define NPARS 1
-#define NSTEPS 1000
-#define NWALKERS 1000
+#define NPARS 50
+#define NSTEPS 10
+#define NWALKERS 250
 
 #endif // #ifndef _PARS_HEADER_GUARD
