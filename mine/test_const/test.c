@@ -60,8 +60,9 @@ int main( int argc, char ** argv )
     start_pos = make_guess(guess, ballsize, nwalkers, npars);
 
     const char fname[]="chain.dat";
-    run_chain(&argc, &argv, start_pos, a, &lnprob, &mydata, fname);
-    free(data);
+    run_chain(&argc, &argv, start_pos, a, &lnprob, &data, fname);
     free(start_pos);
+    free(data_val);
+
     return 0;
 }
