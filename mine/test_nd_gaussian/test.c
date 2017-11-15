@@ -32,12 +32,12 @@ double lnprob(const double *pars, int npars, const void *userdata)
 int main( int argc, char ** argv )
 {
     double a=2.0;
-    char data_fname[]="means.dat"
-    char icov_fname[]="icov.dat"
-    char guess_fname[]="guesses.dat"
+    char data_fname[]="means.dat";
+    char icov_fname[]="icov.dat";
+    char guess_fname[]="guesses.dat";
     FILE *file;
     struct mydata *gaussian_data;
-    int npars, ipar, jpar, iwalker;
+    int npars, nwalkers, ipar, jpar, iwalker;
     walker_pos *start_pos;
 
     npars = (int)NPARS;
