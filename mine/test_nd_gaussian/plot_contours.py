@@ -15,7 +15,7 @@ import corner
 
 def main():
 
-    steps = np.genfromtxt(chain_fname,usecols=[2,3,4,5,6],skip_header=1,comments='#')
+    steps = np.genfromtxt(chain_fname,usecols=[2,3,4,5,6],skip_header=3,comments='#')
     truths = np.genfromtxt(data_fname)
 
     signif_levels = np.array([1.0,2.0,3.0])
