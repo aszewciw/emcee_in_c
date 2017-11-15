@@ -30,7 +30,7 @@ double lnprob(const double *pars, int npars, const void *userdata)
 int main( int argc, char ** argv )
 {
     int ndata=100;
-    int i;
+    int i, npars, nwalkers;
     double a=2.0;
 
     double truepars[1] = {1};
@@ -45,6 +45,9 @@ int main( int argc, char ** argv )
     for(i=0; i<ndata; i++) {
         data_val[i] = truepars[0] + err*mca_randn();
     }
+
+    nwalkers = (int)NWALKERS;
+    npars = (int)NPARS;
 
     mydata data;
     data.ndata = ndata;
