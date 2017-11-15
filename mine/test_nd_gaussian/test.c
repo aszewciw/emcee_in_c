@@ -1,25 +1,25 @@
 #include "emcee.h"
 
-struct mydata {
+typedef struct mydata {
     double data[NPARS];
     double ivar[NPARS][NPARS]; // same error for each
-};
+} mydata;
 
 double lnprob(const double *pars, int npars, const void *userdata)
 {
     int idata,jdata,ndata;
     double chi2,diff_i,diff_j,lnprob,cinv_ij;
-    const struct mydata *mydata = userdata;
+    const mydata *data = userdata;
 
     ndata=(int)NPARS;
 
     chi2=0;
 
     for (idata=0; idata<ndata; idata++) {
-        diff_i = mydata->data[idata] - pars[idata];
+        diff_i = data->data[idata] - pars[idata];
         for(jdata=0; jdata<ndata; jdata++){
-            diff_j = mydata->data[jdata] - pars[jdata];
-            cinv_ij = mydata->ivar[idata][jdata];
+            diff_j = data->data[jdata] - pars[jdata];
+            cinv_ij = data->ivar[idata][jdata];
             chi2 += diff_i*diff_j*cinv_ij;
         }
     }
@@ -36,7 +36,7 @@ int main( int argc, char ** argv )
     char icov_fname[]="icov.dat";
     char guess_fname[]="guesses.dat";
     FILE *file;
-    struct mydata *gaussian_data;
+    mydata *gaussian_data;
     int npars, nwalkers, ipar, jpar, iwalker;
     walker_pos *start_pos;
 
