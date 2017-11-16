@@ -24,10 +24,11 @@ def main():
 
     plt.clf()
     plt.figure(1)
-    plt_name = 'nd_gaussian_chain_pyversion_contours.png'
+    plt_name = 'contours_nd_gaussian_chain_pyversion.png'
     fig = corner.corner(steps,levels=levels,color='g',quantiles=quantiles,
                         plot_density=False,plot_datapoints=False,truths=truths,
                         fill_contours=True)
+    plt.suptitle('5D Gaussian Sampling (emcee)')
     plt.savefig(plt_name)
 
 if __name__ == '__main__':
