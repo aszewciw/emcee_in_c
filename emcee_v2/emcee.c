@@ -135,7 +135,7 @@ walker_pos *make_guess(double *centers, double *widths, size_t nwalkers, size_t 
 //     }
 // }
 /* -------------------------------------------------------------------------- */
-int walker_accept(double lnprob_old,double lnprob_new,int npars,double z)
+int walker_accept(double lnprob_old,double lnprob_new,size_t npars,double z)
 {
     double lnprob_diff = (npars - 1.)*log(z) + lnprob_new - lnprob_old;
     double r = rand_0to1();
