@@ -24,8 +24,8 @@ typedef struct ensemble {
 
 typedef struct chain {
     size_t nsteps;
-    ensemble * ball_1;
-    ensemble * ball_2;
+    ensemble * ensemble_A;
+    ensemble * ensemble_B;
 } chain;
 
 walker_pos* allocate_walkers(size_t nwalkers);
@@ -38,7 +38,7 @@ void free_chain(chain *c);
 
 walker_pos* make_guess(double *centers, double *widths, size_t nwalkers, size_t npars);
 double rand_0to1();
-double mca_randn();
+double normal_rand();
 
 int walker_accept(double lnprob_old,double lnprob_new,size_t npars,double z);
 int write_chain(const struct chain *c, const char *fname);

@@ -44,29 +44,29 @@ chain* allocate_chain(size_t nsteps, size_t nwalkers, size_t npars){
     }
 
     /* allocate space for nsteps ensembles */
-    self->ball_1=calloc(nsteps,sizeof(ensemble));
-    if (self->ball_1==NULL) {
+    self->ensemble_A=calloc(nsteps,sizeof(ensemble));
+    if (self->ensemble_A==NULL) {
         fprintf(stderr,"Could not allocate struct ensemble\n");
         exit(EXIT_FAILURE);
     }
-    self->ball_2=calloc(nsteps,sizeof(ensemble));
-    if (self->ball_2==NULL) {
+    self->ensemble_B=calloc(nsteps,sizeof(ensemble));
+    if (self->ensemble_B==NULL) {
         fprintf(stderr,"Could not allocate struct ensemble\n");
         exit(EXIT_FAILURE);
     }
 
     for(i=0; i<nsteps; i++){
-        self->ball_1[i].nwalkers=nwalkers_over_two;
-        self->ball_1[i].npars=npars;
-        self->ball_1[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
-        if (self->ball_1[i].walker==NULL) {
+        self->ensemble_A[i].nwalkers=nwalkers_over_two;
+        self->ensemble_A[i].npars=npars;
+        self->ensemble_A[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
+        if (self->ensemble_A[i].walker==NULL) {
             fprintf(stderr,"Could not allocate struct walker_pos\n");
             exit(EXIT_FAILURE);
         }
-        self->ball_2[i].nwalkers=nwalkers_over_two;
-        self->ball_2[i].npars=npars;
-        self->ball_2[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
-        if (self->ball_2[i].walker==NULL) {
+        self->ensemble_B[i].nwalkers=nwalkers_over_two;
+        self->ensemble_B[i].npars=npars;
+        self->ensemble_B[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
+        if (self->ensemble_B[i].walker==NULL) {
             fprintf(stderr,"Could not allocate struct walker_pos\n");
             exit(EXIT_FAILURE);
         }
@@ -92,11 +92,11 @@ void free_chain(chain *c){
     nsteps=c->nsteps;
 
     for(i=0; i<nsteps; i++){
-        free(c->ball_1[i].walker);
-        free(c->ball_2[i].walker);
+        free(c->ensemble_A[i].walker);
+        free(c->ensemble_B[i].walker);
     }
-    free(c->ball_1);
-    free(c->ball_2);
+    free(c->ensemble_A);
+    free(c->ensemble_B);
     free(c);
 }
 
@@ -189,7 +189,7 @@ double rand_0to1()
 }
 
 /* -------------------------------------------------------------------------- */
-double mca_randn()
+double normal_rand()
 {
     double x1, x2, w, y1;//, y2;
 
@@ -232,9 +232,9 @@ int write_chain(const struct chain *c, const char *fname)
     size_t istep,iwalker,ipar;
 
     nsteps = c->nsteps;
-    nwalkers_over_two = c->ball_1[0].nwalkers;
+    nwalkers_over_two = c->ensemble_A[0].nwalkers;
     nwalkers = nwalkers_over_two*2;
-    npars = c->ball_1[0].npars;
+    npars = c->ensemble_A[0].npars;
 
 
     FILE *file=fopen(fname,"w");
@@ -249,21 +249,21 @@ int write_chain(const struct chain *c, const char *fname)
     for (istep=0; istep<nsteps; istep++) {
         for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
             fprintf(file,"%d\t%.16g\t",
-                    c->ball_1[istep].walker[iwalker].accept,
-                    c->ball_1[istep].walker[iwalker].lnprob);
+                    c->ensemble_A[istep].walker[iwalker].accept,
+                    c->ensemble_A[istep].walker[iwalker].lnprob);
             for(ipar=0; ipar<npars; ipar++){
                 fprintf(file,"%.16g\t",
-                        c->ball_1[istep].walker[iwalker].pars[ipar]);
+                        c->ensemble_A[istep].walker[iwalker].pars[ipar]);
             }
             fprintf(file,"\n");
         }
         for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
             fprintf(file,"%d\t%.16g\t",
-                    c->ball_2[istep].walker[iwalker].accept,
-                    c->ball_2[istep].walker[iwalker].lnprob);
+                    c->ensemble_B[istep].walker[iwalker].accept,
+                    c->ensemble_B[istep].walker[iwalker].lnprob);
             for(ipar=0; ipar<npars; ipar++){
                 fprintf(file,"%.16g\t",
-                        c->ball_2[istep].walker[iwalker].pars[ipar]);
+                        c->ensemble_B[istep].walker[iwalker].pars[ipar]);
             }
             fprintf(file,"\n");
         }
@@ -427,13 +427,13 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
     /* fill first step of chain */
     if(rank==0){
         for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
-            my_chain->ball_1[0].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
-            my_chain->ball_1[0].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
-            my_chain->ball_2[0].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
-            my_chain->ball_2[0].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
+            my_chain->ensemble_A[0].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
+            my_chain->ensemble_A[0].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
+            my_chain->ensemble_B[0].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
+            my_chain->ensemble_B[0].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
             for(ipar=0;ipar<npars;ipar++){
-                my_chain->ball_1[0].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
-                my_chain->ball_2[0].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
+                my_chain->ensemble_A[0].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
+                my_chain->ensemble_B[0].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
             }
         }
     }
@@ -486,13 +486,13 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
         /* fill step of chain */
         if(rank==0){
             for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
-                my_chain->ball_1[istep].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
-                my_chain->ball_1[istep].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
-                my_chain->ball_2[istep].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
-                my_chain->ball_2[istep].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
+                my_chain->ensemble_A[istep].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
+                my_chain->ensemble_A[istep].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
+                my_chain->ensemble_B[istep].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
+                my_chain->ensemble_B[istep].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
                 for(ipar=0;ipar<npars;ipar++){
-                    my_chain->ball_1[istep].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
-                    my_chain->ball_2[istep].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
+                    my_chain->ensemble_A[istep].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
+                    my_chain->ensemble_B[istep].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
                 }
             }
         }
