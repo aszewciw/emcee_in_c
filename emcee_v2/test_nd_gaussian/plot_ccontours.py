@@ -24,7 +24,7 @@ def main():
 
     plt.clf()
     plt.figure(1)
-    histrange=np.array([[-4,4],[-4,4],[-4,4],[-4,4],[-4,4]])
+    histrange=np.array([[-3.5,3.5],[-3.5,3.5],[-3.5,3.5],[-3.5,3.5],[-3.5,3.5]])
     plt_name = 'contours_nd_gaussian_chain_cversion.png'
     fig = corner.corner(steps,levels=levels,color='r',quantiles=quantiles,
                         plot_density=False,plot_datapoints=False,truths=truths,
