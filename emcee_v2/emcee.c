@@ -120,21 +120,6 @@ walker_pos *make_guess(double *centers, double *widths, size_t nwalkers, size_t 
     return guess;
 }
 /* -------------------------------------------------------------------------- */
-// void stretch_move(double z, int npars, const double *pars_old, const double *pars_comp,
-//                   double *pars_new)
-// {
-//     int i;
-//     double val, cval;
-
-//     for (i=0; i<npars; i++) {
-
-//         double val=pars_old[i];
-//         double cval=pars_comp[i];
-
-//         pars_new[i] = cval - z*(cval-val);
-//     }
-// }
-/* -------------------------------------------------------------------------- */
 int walker_accept(double lnprob_old,double lnprob_new,size_t npars,double z)
 {
     double lnprob_diff = (npars - 1.)*log(z) + lnprob_new - lnprob_old;
@@ -216,11 +201,16 @@ size_t rand_walker(size_t n)
 /* -------------------------------------------------------------------------- */
 double rand_gofz(double a)
 {
-    // ( (a-1) rand + 1 )^2 / a;
+    /*
+    g(z) ~ 1/sqrt(z) on z=[1/a, a]
+    After normalizing, drawing z from this distribution is done as
+        z = ( (a-1) rand + 1 )^2 / a
+    */
 
-    double z = (a - 1.)*rand_0to1() + 1.;
+    double tmp,z;
 
-    z = z*z/a;
+    tmp = (a - 1.)*rand_0to1() + 1.;
+    z = tmp*tmp/a;
 
     return z;
 }
@@ -273,7 +263,7 @@ int write_chain(const struct chain *c, const char *fname)
     return 1;
 }
 
-
+/* -------------------------------------------------------------------------- */
 void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                double (*lnprob)(const double *, size_t, const void *),
                const void *userdata, const char *fname)
@@ -375,13 +365,14 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
     /*========================================================================*/
 
     /* Get things ready to begin the chain */
-    /* set up the rng here */
+    /* set up the rng here -- ensure each proc has a different seed */
     srand((unsigned)(time(&t))+rank);
 
     /* Have process 0 send data to all others */
     // MPI_Bcast(&start_pos[0], nwalkers, MPI_WALKER, 0, MPI_COMM_WORLD);
 
     /* Fill the two ensembles with walker positions */
+    /* No need for broadcasting here because all procs have the same copy of start_pos from main */
     for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
         for(ipar=0; ipar<npars; ipar++){
             ensemble_A->walker[iwalker].pars[ipar]=start_pos[iwalker].pars[ipar];
@@ -389,9 +380,8 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
         }
     }
 
-    /* Fill each proc's walkers with appropriate starting positions */
+    /* Fill each proc's walkers with appropriate starting positions and get lnprob */
     /* We'll first do ensemble_B */
-    /* also calculate lnprob */
     for(iwalker=0; iwalker<slice_length; iwalker++){
         iensemble = iwalker+lower_ind;
         for(ipar=0; ipar<npars; ipar++){

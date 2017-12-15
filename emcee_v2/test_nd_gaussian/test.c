@@ -10,7 +10,22 @@ double lnprob(const double *pars, size_t npars, const void *userdata)
     size_t idata,jdata,ndata;
     double chi2,diff_i,diff_j,lnprob,cinv_ij;
     const mydata *data = userdata;
+    int rank;
+    char fname[256];
 
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    snprintf(fname, 256, "trial_stats_proc_%d.dat", rank);
+    FILE *file;
+    if((file=fopen(fname,"a"))==NULL){
+        fprintf(stderr, "Error: Cannot open file %s\n", fname);
+        exit(EXIT_FAILURE);
+    }
+    for(idata=0; idata<npars; idata++){
+        fprintf(file, "%lf\t"pars[idata]);
+    }
+    fprintf(file, "\n");
+
+    fclose(file);
     chi2=0;
 
     for (idata=0; idata<npars; idata++) {
