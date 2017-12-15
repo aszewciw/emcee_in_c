@@ -21,7 +21,7 @@ double lnprob(const double *pars, size_t npars, const void *userdata)
         exit(EXIT_FAILURE);
     }
     for(idata=0; idata<npars; idata++){
-        fprintf(file, "%lf\t"pars[idata]);
+        fprintf(file, "%lf\t", pars[idata]);
     }
     fprintf(file, "\n");
 
