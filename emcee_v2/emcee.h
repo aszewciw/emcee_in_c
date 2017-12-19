@@ -76,6 +76,6 @@ double rand_gofz(double a);
 /* the main function to run a chain */
 void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                double (*lnprob)(const double *, size_t, const void *),
-               const void *userdata, const char *fname);
+               const void *userdata, const char *fname, int nburn_in);
 
 #endif //#ifndef _EMCEE_HEADER_GUARD
