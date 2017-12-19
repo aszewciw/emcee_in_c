@@ -2,7 +2,7 @@
 
 typedef struct mydata {
     double data[NPARS];
-    double ivar[NPARS][NPARS]; // same error for each
+    double ivar[NPARS][NPARS];
 } mydata;
 
 double lnprob(const double *pars, size_t npars, const void *userdata)
@@ -11,21 +11,21 @@ double lnprob(const double *pars, size_t npars, const void *userdata)
     double chi2,diff_i,diff_j,lnprob,cinv_ij;
     const mydata *data = userdata;
     int rank;
-    char fname[256];
+    // char fname[256];
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    snprintf(fname, 256, "trial_stats_proc_%d.dat", rank);
-    FILE *file;
-    if((file=fopen(fname,"a"))==NULL){
-        fprintf(stderr, "Error: Cannot open file %s\n", fname);
-        exit(EXIT_FAILURE);
-    }
-    for(idata=0; idata<npars; idata++){
-        fprintf(file, "%lf\t", pars[idata]);
-    }
-    fprintf(file, "\n");
+    // MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    // snprintf(fname, 256, "trial_stats_proc_%d.dat", rank);
+    // FILE *file;
+    // if((file=fopen(fname,"a"))==NULL){
+    //     fprintf(stderr, "Error: Cannot open file %s\n", fname);
+    //     exit(EXIT_FAILURE);
+    // }
+    // for(idata=0; idata<npars; idata++){
+    //     fprintf(file, "%lf\t", pars[idata]);
+    // }
+    // fprintf(file, "\n");
 
-    fclose(file);
+    // fclose(file);
     chi2=0;
 
     for (idata=0; idata<npars; idata++) {
