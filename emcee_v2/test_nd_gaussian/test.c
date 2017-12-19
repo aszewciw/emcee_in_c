@@ -38,8 +38,8 @@ int main( int argc, char ** argv )
     size_t npars, nwalkers;
     size_t ipar, jpar, iwalker;
     walker_pos *start_pos;
-    int nburn_in;
-    nburn_in=1;
+    int nburn;
+    nburn=1;
 
     npars = (size_t)NPARS;
     nwalkers = (size_t)NWALKERS;
@@ -89,7 +89,7 @@ int main( int argc, char ** argv )
     const char fname[]="nd_gaussian_chain_cversion.dat";
 
     // start_pos = make_guess(guess,ballsize,nwalkers,npars);
-    run_chain(&argc, &argv, start_pos, a, &lnprob, gaussian_data, fname, nburn_in);
+    run_chain(&argc, &argv, start_pos, a, &lnprob, gaussian_data, fname, nburn);
     free(gaussian_data);
     free(start_pos);
 

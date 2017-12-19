@@ -31,51 +31,6 @@ ensemble* allocate_ensemble(size_t nwalkers, size_t npars){
 }
 
 /* -------------------------------------------------------------------------- */
-chain* allocate_chain(size_t nsteps, size_t nwalkers, size_t npars){
-
-    size_t nwalkers_over_two, i;
-    struct chain *self=calloc(1,sizeof(chain));
-
-    nwalkers_over_two=nwalkers/2;
-
-    if (self==NULL) {
-        fprintf(stderr,"Could not allocate struct chain\n");
-        exit(EXIT_FAILURE);
-    }
-
-    /* allocate space for nsteps ensembles */
-    self->ensemble_A=calloc(nsteps,sizeof(ensemble));
-    if (self->ensemble_A==NULL) {
-        fprintf(stderr,"Could not allocate struct ensemble\n");
-        exit(EXIT_FAILURE);
-    }
-    self->ensemble_B=calloc(nsteps,sizeof(ensemble));
-    if (self->ensemble_B==NULL) {
-        fprintf(stderr,"Could not allocate struct ensemble\n");
-        exit(EXIT_FAILURE);
-    }
-
-    for(i=0; i<nsteps; i++){
-        self->ensemble_A[i].nwalkers=nwalkers_over_two;
-        self->ensemble_A[i].npars=npars;
-        self->ensemble_A[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
-        if (self->ensemble_A[i].walker==NULL) {
-            fprintf(stderr,"Could not allocate struct walker_pos\n");
-            exit(EXIT_FAILURE);
-        }
-        self->ensemble_B[i].nwalkers=nwalkers_over_two;
-        self->ensemble_B[i].npars=npars;
-        self->ensemble_B[i].walker=calloc(nwalkers_over_two,sizeof(walker_pos));
-        if (self->ensemble_B[i].walker==NULL) {
-            fprintf(stderr,"Could not allocate struct walker_pos\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-    self->nsteps=nsteps;
-    return self;
-}
-
-/* -------------------------------------------------------------------------- */
 void free_walkers(walker_pos *w){
     free(w);
 }
@@ -216,52 +171,20 @@ double rand_gofz(double a)
 }
 
 /* -------------------------------------------------------------------------- */
-int write_chain(const struct chain *c, const char *fname)
+int write_header(const char *fname, size_t nsteps, size_t nwalkers, size_t npars)
 {
-    size_t nwalkers, nsteps, npars, nwalkers_over_two;
-    size_t istep,iwalker,ipar;
-
-    nsteps = c->nsteps;
-    nwalkers_over_two = c->ensemble_A[0].nwalkers;
-    nwalkers = nwalkers_over_two*2;
-    npars = c->ensemble_A[0].npars;
-
-
     FILE *file=fopen(fname,"w");
     if (file==NULL) {
         fprintf(stderr,"Error: could not open file '%s'\n", fname);
         return 0;
     }
-
-    fprintf(file, "# nsteps nwalkers npars\n");
-    fprintf(file,"%zu\t%zu\t%zu\n", nsteps, nwalkers, npars);
-    fprintf(file, "# accept lnprob pars\n");
-    for (istep=0; istep<nsteps; istep++) {
-        for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
-            fprintf(file,"%d\t%.16g\t",
-                    c->ensemble_A[istep].walker[iwalker].accept,
-                    c->ensemble_A[istep].walker[iwalker].lnprob);
-            for(ipar=0; ipar<npars; ipar++){
-                fprintf(file,"%.16g\t",
-                        c->ensemble_A[istep].walker[iwalker].pars[ipar]);
-            }
-            fprintf(file,"\n");
-        }
-        for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
-            fprintf(file,"%d\t%.16g\t",
-                    c->ensemble_B[istep].walker[iwalker].accept,
-                    c->ensemble_B[istep].walker[iwalker].lnprob);
-            for(ipar=0; ipar<npars; ipar++){
-                fprintf(file,"%.16g\t",
-                        c->ensemble_B[istep].walker[iwalker].pars[ipar]);
-            }
-            fprintf(file,"\n");
-        }
-    }
+    fprintf(file, "# nsteps=%zu nwalkers=%zu npars=%zu\n",nsteps, nwalkers, npars);
+    fprintf(file, "# accept lnprob [pars]\n");
 
     fclose(file);
     return 1;
 }
+
 /* -------------------------------------------------------------------------- */
 int write_step(const char *fname, const struct ensemble *ensemble_A,
                const struct ensemble *ensemble_B)
@@ -303,25 +226,11 @@ int write_step(const char *fname, const struct ensemble *ensemble_A,
     fclose(file);
     return 1;
 }
-/* -------------------------------------------------------------------------- */
-int write_header(const char *fname, size_t nsteps, size_t nwalkers, size_t npars)
-{
-    FILE *file=fopen(fname,"w");
-    if (file==NULL) {
-        fprintf(stderr,"Error: could not open file '%s'\n", fname);
-        return 0;
-    }
-    fprintf(file, "# nsteps=%zu nwalkers=%zu npars=%zu\n",nsteps, nwalkers, npars);
-    fprintf(file, "# accept lnprob [pars]\n");
-
-    fclose(file);
-    return 1;
-}
 
 /* -------------------------------------------------------------------------- */
 void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                double (*lnprob)(const double *, size_t, const void *),
-               const void *userdata, const char *fname)
+               const void *userdata, const char *fname, int nburn)
 {
     /*========================================================================*/
     /* MPI stuff */
@@ -339,7 +248,6 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
     double *pars;
     ensemble *ensemble_A, *ensemble_B;
     walker_pos *my_walkers;
-    // chain *my_chain;
 
     /* more MPI stuff */
     size_t slice_length, lower_ind, upper_ind, remain;
@@ -408,10 +316,7 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
     upper_ind = lower_ind + slice_length;
 
     /*========================================================================*/
-
-    /* set up chain, ensembles, walkers */
-    // if (rank==0) my_chain = allocate_chain(nsteps,nwalkers,npars);
-
+    /* set up ensembles, walkers */
     ensemble_A = allocate_ensemble(nwalkers_over_two,npars);
     ensemble_B = allocate_ensemble(nwalkers_over_two,npars);
 
@@ -422,9 +327,6 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
     /* Get things ready to begin the chain */
     /* set up the rng here -- ensure each proc has a different seed */
     srand((unsigned)(time(&t))+rank);
-
-    /* Have process 0 send data to all others */
-    // MPI_Bcast(&start_pos[0], nwalkers, MPI_WALKER, 0, MPI_COMM_WORLD);
 
     /* Fill the two ensembles with walker positions */
     /* No need for broadcasting here because all procs have the same copy of start_pos from main */
@@ -469,26 +371,52 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                    &ensemble_A->walker[0], counts, mpi_disp,
                    MPI_WALKER, MPI_COMM_WORLD);
 
-    // /* fill first step of chain */
-    // if(rank==0){
-    //     for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
-    //         my_chain->ensemble_A[0].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
-    //         my_chain->ensemble_A[0].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
-    //         my_chain->ensemble_B[0].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
-    //         my_chain->ensemble_B[0].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
-    //         for(ipar=0;ipar<npars;ipar++){
-    //             my_chain->ensemble_A[0].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
-    //             my_chain->ensemble_B[0].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
-    //         }
-    //     }
-    // }
+    /*=============================== burn-in ================================*/
+    for(istep=0; istep<nburn_in; istep++){
+
+        /* set walkers to positions for ensemble_A */
+        for(iwalker=0; iwalker<slice_length; iwalker++){
+            iensemble = iwalker+lower_ind;
+            my_walkers[iwalker].accept = ensemble_A->walker[iensemble].accept;
+            my_walkers[iwalker].lnprob = ensemble_A->walker[iensemble].lnprob;
+            for(ipar=0; ipar<npars; ipar++){
+                my_walkers[iwalker].pars[ipar] = ensemble_A->walker[iensemble].pars[ipar];
+            }
+        }
+        /* move my_walkers based on ensemble_B */
+
+        step_walkers(my_walkers, ensemble_B, slice_length, a, lnprob, userdata);
+
+        /* allgatherv new positions of A */
+        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+                       &ensemble_A->walker[0], counts, mpi_disp,
+                       MPI_WALKER, MPI_COMM_WORLD);
+
+        /* set walkers to positions for ensemble_B */
+        for(iwalker=0; iwalker<slice_length; iwalker++){
+            iensemble = iwalker+lower_ind;
+            my_walkers[iwalker].accept = ensemble_B->walker[iensemble].accept;
+            my_walkers[iwalker].lnprob = ensemble_B->walker[iensemble].lnprob;
+            for(ipar=0; ipar<npars; ipar++){
+                my_walkers[iwalker].pars[ipar] = ensemble_B->walker[iensemble].pars[ipar];
+            }
+        }
+
+        /* move ensemble_B based on ensemble_A */
+        step_walkers(my_walkers, ensemble_A, slice_length, a, lnprob, userdata);
+
+        /* allgatherv new positions of B */
+        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
+                       &ensemble_B->walker[0], counts, mpi_disp,
+                       MPI_WALKER, MPI_COMM_WORLD);
+
+        if(rank==0) write_step(fname,ensemble_A,ensemble_B);
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 
     // write header and first step
     if(rank==0) write_header(fname,nsteps,nwalkers,npars);
     if(rank==0) write_step(fname,ensemble_A,ensemble_B);
-
-    /*====================== burn in would happen here =======================*/
-
 
     /*========================================================================*/
     /* begin the chain */
@@ -525,39 +453,15 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
         /* move ensemble_B based on ensemble_A */
         step_walkers(my_walkers, ensemble_A, slice_length, a, lnprob, userdata);
 
-
         /* allgatherv new positions of B */
         MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
                        &ensemble_B->walker[0], counts, mpi_disp,
                        MPI_WALKER, MPI_COMM_WORLD);
 
-        /* put A and B in chain */
-        /* fill step of chain */
-        // if(rank==0){
-        //     for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
-        //         my_chain->ensemble_A[istep].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
-        //         my_chain->ensemble_A[istep].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
-        //         my_chain->ensemble_B[istep].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
-        //         my_chain->ensemble_B[istep].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
-        //         for(ipar=0;ipar<npars;ipar++){
-        //             my_chain->ensemble_A[istep].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
-        //             my_chain->ensemble_B[istep].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
-        //         }
-        //     }
-        // }
         if(rank==0) write_step(fname,ensemble_A,ensemble_B);
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
-    /*========================================================================*/
-    /* write file */
-    // if(rank==0) write_chain(my_chain, fname);
-
-    // MPI_Barrier(MPI_COMM_WORLD);
-    /*========================================================================*/
-
-    /* free chain */
-    // if(rank==0) free_chain(my_chain);
     free_ensemble(ensemble_A);
     free_ensemble(ensemble_B);
     free_walkers(my_walkers);
