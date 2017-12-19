@@ -262,6 +262,60 @@ int write_chain(const struct chain *c, const char *fname)
     fclose(file);
     return 1;
 }
+/* -------------------------------------------------------------------------- */
+int write_step(const char *fname, const struct *ensemble_A, const struct *ensemble_B)
+{
+    size_t nwalkers,npars,nwalkers_over_two;
+    size_t iwalker,ipar;
+
+    nwalkers_over_two = ensemble_A->nwalkers;
+    nwalkers = nwalkers_over_two*2;
+    npars = ensemble_A->npars;
+
+    FILE *file=fopen(fname,"a");
+    if (file==NULL) {
+        fprintf(stderr,"Error: could not open file '%s'\n", fname);
+        return 0;
+    }
+
+    for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
+        fprintf(file,"%d\t%.16g\t",
+                ensemble_A->walker[iwalker].accept,
+                ensemble_A->walker[iwalker].lnprob);
+        for(ipar=0; ipar<npars; ipar++){
+            fprintf(file,"%.16g\t",
+                    ensemble_A->walker[iwalker].pars[ipar]);
+        }
+        fprintf(file,"\n");
+    }
+    for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
+        fprintf(file,"%d\t%.16g\t",
+                ensemble_B->walker[iwalker].accept,
+                ensemble_B->walker[iwalker].lnprob);
+        for(ipar=0; ipar<npars; ipar++){
+            fprintf(file,"%.16g\t",
+                    ensemble_B->walker[iwalker].pars[ipar]);
+        }
+        fprintf(file,"\n");
+    }
+
+    fclose(file);
+    return 1;
+}
+/* -------------------------------------------------------------------------- */
+int write_header(const char *fname, size_t nsteps, size_t nwalkers, size_t npars)
+{
+    FILE *file=fopen(fname,"w");
+    if (file==NULL) {
+        fprintf(stderr,"Error: could not open file '%s'\n", fname);
+        return 0;
+    }
+    fprintf(file, "# nsteps=%zu nwalkers=%zu npars=%zu\n",nsteps, nwalkers, npars);
+    fprintf(file, "# accept lnprob [pars]\n");
+
+    fclose(file);
+    return 1;
+}
 
 /* -------------------------------------------------------------------------- */
 void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
@@ -284,7 +338,7 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
     double *pars;
     ensemble *ensemble_A, *ensemble_B;
     walker_pos *my_walkers;
-    chain *my_chain;
+    // chain *my_chain;
 
     /* more MPI stuff */
     size_t slice_length, lower_ind, upper_ind, remain;
@@ -355,7 +409,7 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
     /*========================================================================*/
 
     /* set up chain, ensembles, walkers */
-    if (rank==0) my_chain = allocate_chain(nsteps,nwalkers,npars);
+    // if (rank==0) my_chain = allocate_chain(nsteps,nwalkers,npars);
 
     ensemble_A = allocate_ensemble(nwalkers_over_two,npars);
     ensemble_B = allocate_ensemble(nwalkers_over_two,npars);
@@ -414,19 +468,23 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                    &ensemble_A->walker[0], counts, mpi_disp,
                    MPI_WALKER, MPI_COMM_WORLD);
 
-    /* fill first step of chain */
-    if(rank==0){
-        for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
-            my_chain->ensemble_A[0].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
-            my_chain->ensemble_A[0].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
-            my_chain->ensemble_B[0].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
-            my_chain->ensemble_B[0].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
-            for(ipar=0;ipar<npars;ipar++){
-                my_chain->ensemble_A[0].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
-                my_chain->ensemble_B[0].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
-            }
-        }
-    }
+    // /* fill first step of chain */
+    // if(rank==0){
+    //     for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+    //         my_chain->ensemble_A[0].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
+    //         my_chain->ensemble_A[0].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
+    //         my_chain->ensemble_B[0].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
+    //         my_chain->ensemble_B[0].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
+    //         for(ipar=0;ipar<npars;ipar++){
+    //             my_chain->ensemble_A[0].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
+    //             my_chain->ensemble_B[0].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
+    //         }
+    //     }
+    // }
+
+    // write header and first step
+    if(rank==0) write_header(fname,nsteps,nwalkers,npars);
+    if(rank==0) write_step(fname,ensemble_A,ensemble_B);
 
     /*====================== burn in would happen here =======================*/
 
@@ -474,30 +532,31 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
 
         /* put A and B in chain */
         /* fill step of chain */
-        if(rank==0){
-            for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
-                my_chain->ensemble_A[istep].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
-                my_chain->ensemble_A[istep].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
-                my_chain->ensemble_B[istep].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
-                my_chain->ensemble_B[istep].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
-                for(ipar=0;ipar<npars;ipar++){
-                    my_chain->ensemble_A[istep].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
-                    my_chain->ensemble_B[istep].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
-                }
-            }
-        }
+        // if(rank==0){
+        //     for(iwalker=0;iwalker<nwalkers_over_two;iwalker++){
+        //         my_chain->ensemble_A[istep].walker[iwalker].accept=ensemble_A->walker[iwalker].accept;
+        //         my_chain->ensemble_A[istep].walker[iwalker].lnprob=ensemble_A->walker[iwalker].lnprob;
+        //         my_chain->ensemble_B[istep].walker[iwalker].accept=ensemble_B->walker[iwalker].accept;
+        //         my_chain->ensemble_B[istep].walker[iwalker].lnprob=ensemble_B->walker[iwalker].lnprob;
+        //         for(ipar=0;ipar<npars;ipar++){
+        //             my_chain->ensemble_A[istep].walker[iwalker].pars[ipar]=ensemble_A->walker[iwalker].pars[ipar];
+        //             my_chain->ensemble_B[istep].walker[iwalker].pars[ipar]=ensemble_B->walker[iwalker].pars[ipar];
+        //         }
+        //     }
+        // }
+        if(rank=0) write_step(fname,ensemble_A,ensemble_B);
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
     /*========================================================================*/
     /* write file */
-    if(rank==0) write_chain(my_chain, fname);
+    // if(rank==0) write_chain(my_chain, fname);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    // MPI_Barrier(MPI_COMM_WORLD);
     /*========================================================================*/
 
     /* free chain */
-    if(rank==0) free_chain(my_chain);
+    // if(rank==0) free_chain(my_chain);
     free_ensemble(ensemble_A);
     free_ensemble(ensemble_B);
     free_walkers(my_walkers);

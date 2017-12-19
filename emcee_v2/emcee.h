@@ -56,6 +56,12 @@ int walker_accept(double lnprob_old,double lnprob_new,size_t npars,double z);
 /* write every step in mcmc */
 int write_chain(const struct chain *c, const char *fname);
 
+/* write single step in chain */
+int write_step(const char *fname, const struct *ensemble_A, const struct *ensemble_B);
+
+/* write header info of chain */
+int write_header(const char *fname, size_t nsteps, size_t nwalkers, size_t npars);
+
 /* use positions of walkers in the complementary ensemble to move a single walker */
 void step_walkers(walker_pos *walkers, ensemble *comp_walkers, size_t nwalkers,
                   double a, double (*lnprob)(const double *, size_t, const void *),
