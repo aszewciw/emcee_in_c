@@ -10,22 +10,7 @@ double lnprob(const double *pars, size_t npars, const void *userdata)
     size_t idata,jdata,ndata;
     double chi2,diff_i,diff_j,lnprob,cinv_ij;
     const mydata *data = userdata;
-    int rank;
-    // char fname[256];
 
-    // MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    // snprintf(fname, 256, "trial_stats_proc_%d.dat", rank);
-    // FILE *file;
-    // if((file=fopen(fname,"a"))==NULL){
-    //     fprintf(stderr, "Error: Cannot open file %s\n", fname);
-    //     exit(EXIT_FAILURE);
-    // }
-    // for(idata=0; idata<npars; idata++){
-    //     fprintf(file, "%lf\t", pars[idata]);
-    // }
-    // fprintf(file, "\n");
-
-    // fclose(file);
     chi2=0;
 
     for (idata=0; idata<npars; idata++) {
@@ -53,6 +38,8 @@ int main( int argc, char ** argv )
     size_t npars, nwalkers;
     size_t ipar, jpar, iwalker;
     walker_pos *start_pos;
+    int nburn_in;
+    nburn_in=1;
 
     npars = (size_t)NPARS;
     nwalkers = (size_t)NWALKERS;
@@ -102,7 +89,7 @@ int main( int argc, char ** argv )
     const char fname[]="nd_gaussian_chain_cversion.dat";
 
     // start_pos = make_guess(guess,ballsize,nwalkers,npars);
-    run_chain(&argc, &argv, start_pos, a, &lnprob, gaussian_data, fname);
+    run_chain(&argc, &argv, start_pos, a, &lnprob, gaussian_data, fname, nburn_in);
     free(gaussian_data);
     free(start_pos);
 
