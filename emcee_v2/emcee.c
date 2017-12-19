@@ -372,7 +372,7 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                    MPI_WALKER, MPI_COMM_WORLD);
 
     /*=============================== burn-in ================================*/
-    for(istep=0; istep<nburn_in; istep++){
+    for(istep=0; istep<nburn; istep++){
 
         /* set walkers to positions for ensemble_A */
         for(iwalker=0; iwalker<slice_length; iwalker++){
