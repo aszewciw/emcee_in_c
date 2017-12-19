@@ -545,7 +545,7 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
         //         }
         //     }
         // }
-        if(rank=0) write_step(fname,ensemble_A,ensemble_B);
+        if(rank==0) write_step(fname,ensemble_A,ensemble_B);
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
