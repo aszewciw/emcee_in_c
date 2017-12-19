@@ -410,7 +410,6 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                        &ensemble_B->walker[0], counts, mpi_disp,
                        MPI_WALKER, MPI_COMM_WORLD);
 
-        if(rank==0) write_step(fname,ensemble_A,ensemble_B);
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
