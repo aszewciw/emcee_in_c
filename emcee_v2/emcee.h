@@ -57,7 +57,7 @@ int walker_accept(double lnprob_old,double lnprob_new,size_t npars,double z);
 int write_chain(const struct chain *c, const char *fname);
 
 /* write single step in chain */
-int write_step(const char *fname, const struct *ensemble_A, const struct *ensemble_B);
+int write_step(const char *fname, const struct ensemble *ensemble_A, const struct ensemble *ensemble_B);
 
 /* write header info of chain */
 int write_header(const char *fname, size_t nsteps, size_t nwalkers, size_t npars);

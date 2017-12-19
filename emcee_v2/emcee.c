@@ -263,7 +263,8 @@ int write_chain(const struct chain *c, const char *fname)
     return 1;
 }
 /* -------------------------------------------------------------------------- */
-int write_step(const char *fname, const struct *ensemble_A, const struct *ensemble_B)
+int write_step(const char *fname, const struct ensemble *ensemble_A,
+               const struct ensemble *ensemble_B)
 {
     size_t nwalkers,npars,nwalkers_over_two;
     size_t iwalker,ipar;
