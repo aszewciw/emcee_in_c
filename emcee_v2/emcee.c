@@ -203,21 +203,21 @@ int write_step(const char *fname, const struct ensemble *ensemble_A,
     }
 
     for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
-        fprintf(file,"%d\t%.12g\t",
+        fprintf(file,"%d\t%.16g\t",
                 ensemble_A->walker[iwalker].accept,
                 ensemble_A->walker[iwalker].lnprob);
         for(ipar=0; ipar<npars; ipar++){
-            fprintf(file,"%.12g\t",
+            fprintf(file,"%.16g\t",
                     ensemble_A->walker[iwalker].pars[ipar]);
         }
         fprintf(file,"\n");
     }
     for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
-        fprintf(file,"%d\t%.12g\t",
+        fprintf(file,"%d\t%.16g\t",
                 ensemble_B->walker[iwalker].accept,
                 ensemble_B->walker[iwalker].lnprob);
         for(ipar=0; ipar<npars; ipar++){
-            fprintf(file,"%.12g\t",
+            fprintf(file,"%.16g\t",
                     ensemble_B->walker[iwalker].pars[ipar]);
         }
         fprintf(file,"\n");
