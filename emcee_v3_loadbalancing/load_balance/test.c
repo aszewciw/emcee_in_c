@@ -62,11 +62,12 @@ void slave(int myrank)
     while(1) {
         MPI_Recv(&work, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         if (status.MPI_TAG == DIETAG) {
-            return;
+            break;
         }
         result = myrank;
         MPI_Send(&result, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
+    return;
 }
 
 int main(int argc, char **argv)
@@ -81,7 +82,8 @@ int main(int argc, char **argv)
 
     if (myrank == 0) {
         master(ntasks);
-    } else {
+    }
+    else {
         slave(myrank);
     }
     MPI_Finalize();
