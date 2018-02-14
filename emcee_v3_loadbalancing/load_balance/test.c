@@ -9,24 +9,6 @@
 #define WORKTAG     1
 #define DIETAG     2
 
-int main(int argc, char **argv)
-{
-    int myrank,ntasks;
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
-    if(argc!=2){
-        MPI_Finalize();
-        exit(EXIT_FAILURE);
-    }
-
-    if (myrank == 0) {
-        master(ntasks);
-    } else {
-        slave(myrank);
-    }
-    MPI_Finalize();
-}
-
 void master(int ntasks)
 {
     int nprocs, rank, work, itask, tmpres, ires;
@@ -69,7 +51,7 @@ void master(int ntasks)
     }
 
     for(ires=0;ires<ntasks;ires++){
-        fprintf(stderr, "%d\n", result[ires]);
+        fprintf(stderr, "%d\n", results[ires]);
     }
 }
 
@@ -85,4 +67,22 @@ void slave(int myrank)
         result = myrank;
         MPI_Send(&result, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
     }
+}
+
+int main(int argc, char **argv)
+{
+    int myrank,ntasks;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+    if(argc!=2){
+        MPI_Finalize();
+        exit(EXIT_FAILURE);
+    }
+
+    if (myrank == 0) {
+        master(ntasks);
+    } else {
+        slave(myrank);
+    }
+    MPI_Finalize();
 }
