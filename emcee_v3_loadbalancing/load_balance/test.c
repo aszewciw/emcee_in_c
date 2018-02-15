@@ -101,10 +101,11 @@ void slave(int myrank, MPI_Datatype MPI_WALKER)
     my_walkers = allocate_walkers(1);
     master_walkers = allocate_walkers(1);
 
-    max_ind=10;
-    for(i=0;i<myrank;i++){
-        max_ind*=10;
-        max_ind*=10;
+    if(myrank==3){
+        max_ind=10000000;
+    }
+    else{
+        max_ind=10;
     }
     my_walkers[0].accept=myrank;
     my_walkers[0].lnprob=(double)myrank;
