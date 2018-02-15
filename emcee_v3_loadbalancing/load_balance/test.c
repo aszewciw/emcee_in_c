@@ -40,7 +40,7 @@ void master(int ntasks)
 /*
 * Receive results for outstanding work requests.
 */
-    for (rank = 1; rank < nprocs; ++rank) {
+    for (rank = 1; rank < nprocs; rank++) {
         MPI_Recv(&tmpres, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         results[ires]=tmpres;
         ires++;
@@ -53,7 +53,7 @@ void master(int ntasks)
     //     fprintf(stderr, "%d\n", results[ires]);
     // }
 
-    for (rank = 1; rank < nprocs; ++rank) {
+    for (rank = 1; rank < nprocs; rank++) {
         MPI_Send(0, 0, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
     }
 
