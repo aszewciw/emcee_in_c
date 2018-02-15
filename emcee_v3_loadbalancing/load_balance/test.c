@@ -102,7 +102,7 @@ void slave(int myrank, MPI_Datatype MPI_WALKER)
     master_walkers = allocate_walkers(1);
 
     max_ind=10;
-    for(i=0;i<my_rank;i++){
+    for(i=0;i<myrank;i++){
         max_ind*=10;
         max_ind*=10;
     }
