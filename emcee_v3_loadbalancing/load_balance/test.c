@@ -54,7 +54,7 @@ void master(int ntasks)
     }
 
     for (rank = 1; rank < nprocs; rank++) {
-        MPI_Send(0, 0, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
+        MPI_Send(0, 1, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
     }
 
 }
