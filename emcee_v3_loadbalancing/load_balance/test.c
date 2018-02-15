@@ -50,7 +50,7 @@ void master(int ntasks)
 * Tell all the slaves to exit.
 */
     for(ires=0;ires<ntasks;ires++){
-        fprintf(stderr, "%d\n", results[ires]);
+        fprintf(stderr, "\t\tRank 0: %d\n", results[ires]);
     }
 
     for (rank = 1; rank < nprocs; rank++) {
@@ -65,7 +65,7 @@ void slave(int myrank)
     MPI_Status status;
     while(1) {
         MPI_Recv(&work, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-        // fprintf(stderr, "rank %d; work %d\n", myrank,work);
+        fprintf(stderr, "rank %d; work %d\n", myrank,work);
         if (status.MPI_TAG == DIETAG) {
             break;
         }
