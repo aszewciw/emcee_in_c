@@ -107,6 +107,7 @@ void slave(int myrank, MPI_Datatype MPI_WALKER)
     else{
         max_ind=10;
     }
+    fprintf(stderr, "%d\n", max_ind);
     my_walkers[0].accept=myrank;
     my_walkers[0].lnprob=(double)myrank;
     for(ipar=0;ipar<NPARS;ipar++){
