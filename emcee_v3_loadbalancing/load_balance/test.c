@@ -25,7 +25,7 @@ walker_pos* allocate_walkers(size_t nwalkers){
     return self;
 }
 
-void master(int ntasks)
+void master(int ntasks, MPI_Datatype MPI_WALKER)
 {
 
     int nprocs, rank, work, itask, tmpres, ires;
@@ -92,7 +92,7 @@ void master(int ntasks)
 
 }
 
-void slave(int myrank)
+void slave(int myrank, MPI_Datatype MPI_WALKER)
 {
     // int work,result;
     int ipar;
@@ -149,10 +149,10 @@ int main(int argc, char **argv)
 
     /*========================================================================*/
     if (myrank == 0) {
-        master(ntasks);
+        master(ntasks, MPI_WALKER);
     }
     else {
-        slave(myrank);
+        slave(myrank, MPI_WALKER);
     }
     MPI_Type_free(&MPI_WALKER);
     MPI_Finalize();
