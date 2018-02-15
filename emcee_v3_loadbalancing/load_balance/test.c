@@ -113,7 +113,7 @@ void slave(int myrank, MPI_Datatype MPI_WALKER)
         my_walkers[0].pars[ipar]=myrank;
     }
     MPI_Status status;
-    int work_counter=0
+    int work_counter=0;
     while(1) {
         // MPI_Recv(&work, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         // fprintf(stderr, "rank %d; work %d\n", myrank,work);
