@@ -92,6 +92,7 @@ int main(int argc, char **argv)
         MPI_Finalize();
         exit(EXIT_FAILURE);
     }
+    ntasks=atoi(argv[1]);
 
     if (myrank == 0) {
         master(ntasks);
