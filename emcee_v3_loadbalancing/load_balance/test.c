@@ -102,7 +102,7 @@ void slave(int myrank, MPI_Datatype MPI_WALKER)
     master_walkers = allocate_walkers(1);
 
     if(myrank==3){
-        max_ind=100000000;
+        max_ind=1000000000;
     }
     else{
         max_ind=10;
