@@ -31,7 +31,7 @@ void master(int ntasks, MPI_Datatype MPI_WALKER)
     int nprocs, rank, work, itask, tmpres, ires;
     MPI_Status status;
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    walker_pos *my_walkers;
+    struct walker_pos *my_walkers;
 
     my_walkers = allocate_walkers(1);
 
@@ -96,7 +96,7 @@ void slave(int myrank, MPI_Datatype MPI_WALKER)
 {
     // int work,result;
     int ipar;
-    walker_pos *my_walkers, *master_walkers;
+    struct walker_pos *my_walkers, *master_walkers;
     my_walkers = allocate_walkers(1);
     master_walkers=allocate_walkers(1);
 
