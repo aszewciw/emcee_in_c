@@ -31,7 +31,7 @@ void master(int ntasks, MPI_Datatype MPI_WALKER)
     int nprocs, rank, work, itask, tmpres, ires;
     MPI_Status status;
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    struct walker_pos *my_walkers;
+    walker_pos *my_walkers;
 
     my_walkers = allocate_walkers(1);
 
@@ -96,26 +96,26 @@ void slave(int myrank, MPI_Datatype MPI_WALKER)
 {
     // int work,result;
     int ipar;
-    struct walker_pos *my_walkers, *master_walkers;
+    walker_pos *my_walkers, *master_walkers;
     my_walkers = allocate_walkers(1);
-    master_walkers=allocate_walkers(1);
+    master_walkers = allocate_walkers(1);
 
-    my_walkers.accept=myrank;
-    my_walkers.lnprob=(double)myrank;
+    my_walkers[0].accept=myrank;
+    my_walkers[0].lnprob=(double)myrank;
     for(ipar=0;ipar<NPARS;ipar++){
-        my_walkers.pars[ipar]=myrank;
+        my_walkers[0].pars[ipar]=myrank;
     }
     MPI_Status status;
     while(1) {
         // MPI_Recv(&work, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         // fprintf(stderr, "rank %d; work %d\n", myrank,work);
-        MPI_Recv(&master_walkers, 1, MPI_WALKER, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(&master_walkers[0], 1, MPI_WALKER, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         if (status.MPI_TAG == DIETAG) {
             break;
         }
         // result = myrank;
         // MPI_Send(&result, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-        MPI_Send(&my_walkers, 1, MPI_WALKER, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(&my_walkers[0], 1, MPI_WALKER, 0, 0, MPI_COMM_WORLD);
     }
     free(my_walkers);
     free(master_walkers);
