@@ -95,7 +95,8 @@ void master(int ntasks, MPI_Datatype MPI_WALKER)
 void slave(int myrank, MPI_Datatype MPI_WALKER)
 {
     // int work,result;
-    int ipar;
+    int result=0;
+    int ipar,i;
     walker_pos *my_walkers, *master_walkers;
     my_walkers = allocate_walkers(1);
     master_walkers = allocate_walkers(1);
@@ -112,6 +113,9 @@ void slave(int myrank, MPI_Datatype MPI_WALKER)
         MPI_Recv(&master_walkers[0], 1, MPI_WALKER, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         if (status.MPI_TAG == DIETAG) {
             break;
+        }
+        for(i=0;i<(myrank*10);i++){
+            result+=myrank*myrank*myrank;
         }
         // result = myrank;
         // MPI_Send(&result, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
