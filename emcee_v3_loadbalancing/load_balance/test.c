@@ -22,6 +22,9 @@ void master(int ntasks)
     for(itask=0;itask<ntasks;itask++){
         results[itask]=0;
     }
+    for(ires=0;ires<ntasks;ires++){
+        fprintf(stderr, "%d\n", results[ires]);
+    }
 
     for (rank = 1; rank < nprocs; rank++) {
         work = itask;
