@@ -54,15 +54,15 @@ void master(int ntasks)
 /*
 * Tell all the slaves to exit.
 */
+    for(ires=0;ires<ntasks;ires++){
+        fprintf(stderr, "%d\n", results[ires]);
+    }
+
     for (rank = 1; rank < ntasks; ++rank) {
         MPI_Send(0, 0, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
     }
     fprintf(stderr, "here\n");
 
-
-    for(ires=0;ires<ntasks;ires++){
-        fprintf(stderr, "%d\n", results[ires]);
-    }
 }
 
 void slave(int myrank)
