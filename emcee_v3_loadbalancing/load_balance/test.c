@@ -11,6 +11,9 @@
 
 void master(int ntasks)
 {
+
+    fprintf(stderr, "here\n");
+
     int nprocs, rank, work, itask, tmpres, ires;
     MPI_Status status;
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -25,6 +28,7 @@ void master(int ntasks)
         MPI_Send(&work,1,MPI_INT,rank,WORKTAG,MPI_COMM_WORLD);
         itask++;
     }
+    fprintf(stderr, "here\n");
 
     ires=0;
     while (itask<ntasks) {
@@ -35,6 +39,8 @@ void master(int ntasks)
         MPI_Send(&work, 1, MPI_INT, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
         itask++;
     }
+    fprintf(stderr, "here\n");
+
 /*
 * Receive results for outstanding work requests.
 */
@@ -43,12 +49,16 @@ void master(int ntasks)
         results[ires]=tmpres;
         ires++;
     }
+    fprintf(stderr, "here\n");
+
 /*
 * Tell all the slaves to exit.
 */
     for (rank = 1; rank < ntasks; ++rank) {
         MPI_Send(0, 0, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
     }
+    fprintf(stderr, "here\n");
+
 
     for(ires=0;ires<ntasks;ires++){
         fprintf(stderr, "%d\n", results[ires]);
