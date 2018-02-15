@@ -20,7 +20,7 @@ void master(int ntasks)
     for(itask=0;itask<ntasks;itask++){
         results[itask]=0;
     }
-
+    itask=0;
     for (rank = 1; rank < nprocs; rank++) {
         work = itask;
         MPI_Send(&work,1,MPI_INT,rank,WORKTAG,MPI_COMM_WORLD);
