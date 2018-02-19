@@ -86,7 +86,9 @@ void manager(int ntasks, MPI_Datatype MPI_WALKER)
         // fprintf(stderr, "\t\tRank 0: %d\n", results[ires]);
         fprintf(stderr, "lnprob %d: %lf\n", ires, lnprob[ires]);
     }
-
+    for(rank=0; rank<nprocs; rank++){
+        fprintf(stderr, "curr task: %d\n", current_task[rank]);
+    }
     for (rank = 1; rank < nprocs; rank++) {
         // MPI_Send(0, 0, MPI_INT, rank, DIETAG, MPI_COMM_WORLD);
         MPI_Send(0, 0, MPI_WALKER, rank, DIETAG, MPI_COMM_WORLD);
