@@ -25,7 +25,7 @@ walker_pos* allocate_walkers(size_t nwalkers){
     return self;
 }
 
-void master(int ntasks, MPI_Datatype MPI_WALKER)
+void manager(int ntasks, MPI_Datatype MPI_WALKER)
 {
 
     int nprocs, rank, work, itask, tmpres, ires;
@@ -37,28 +37,32 @@ void master(int ntasks, MPI_Datatype MPI_WALKER)
 
     // double results[ntasks];
     double lnprob[ntasks];
+    int current_task[nprocs];     // array of each proc's currently assigned task
     // for(itask=0;itask<ntasks;itask++){
     //     results[itask]=0;
     // }
     for(itask=0;itask<ntasks;itask++){
         lnprob[itask]=0;
     }
+    for(rank=0; rank<nprocs; rank++){
+        current_task[rank]=-1;
+    }
     itask=0;
     for (rank = 1; rank < nprocs; rank++) {
-        work = itask;
+        current_task[rank]=itask;
         // MPI_Send(&work,1,MPI_INT,rank,WORKTAG,MPI_COMM_WORLD);
         MPI_Send(&my_walkers[0],1,MPI_WALKER,rank,WORKTAG,MPI_COMM_WORLD);
         itask++;
     }
 
-    ires=0;
     while (itask<ntasks) {
         // work = itask;
         // MPI_Recv(&tmpres, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         // results[ires]=tmpres;
         MPI_Recv(&my_walkers[0], 1, MPI_WALKER, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        ires=current_task[status.MPI_SOURCE];
         lnprob[ires]=my_walkers[0].lnprob;
-        ires++;
+        current_task[status.MPI_SOURCE]=itask;
         // MPI_Send(&work, 1, MPI_INT, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
         MPI_Send(&my_walkers[0], 1, MPI_WALKER, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
         itask++;
@@ -71,12 +75,12 @@ void master(int ntasks, MPI_Datatype MPI_WALKER)
         // MPI_Recv(&tmpres, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         // results[ires]=tmpres;
         MPI_Recv(&my_walkers[0], 1, MPI_WALKER, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        ires=current_task[status.MPI_SOURCE];
         lnprob[ires]=my_walkers[0].lnprob;
-        ires++;
     }
 
 /*
-* Tell all the slaves to exit.
+* Tell all the workers to exit.
 */
     for(ires=0;ires<ntasks;ires++){
         // fprintf(stderr, "\t\tRank 0: %d\n", results[ires]);
@@ -92,14 +96,14 @@ void master(int ntasks, MPI_Datatype MPI_WALKER)
 
 }
 
-void slave(int myrank, MPI_Datatype MPI_WALKER)
+void worker(int myrank, MPI_Datatype MPI_WALKER)
 {
     // int work,result;
     double result;
     int ipar,i,max_ind;
-    walker_pos *my_walkers, *master_walkers;
+    walker_pos *my_walkers, *manager_walkers;
     my_walkers = allocate_walkers(1);
-    master_walkers = allocate_walkers(1);
+    manager_walkers = allocate_walkers(1);
 
     if(myrank==3){
         max_ind=1000000000;
@@ -118,7 +122,7 @@ void slave(int myrank, MPI_Datatype MPI_WALKER)
     while(1) {
         // MPI_Recv(&work, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         // fprintf(stderr, "rank %d; work %d\n", myrank,work);
-        MPI_Recv(&master_walkers[0], 1, MPI_WALKER, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(&manager_walkers[0], 1, MPI_WALKER, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         if (status.MPI_TAG == DIETAG) {
             break;
         }
@@ -132,7 +136,7 @@ void slave(int myrank, MPI_Datatype MPI_WALKER)
         work_counter++;
     }
     free(my_walkers);
-    free(master_walkers);
+    free(manager_walkers);
     fprintf(stderr, "myrank: %d, nwork: %d\n", myrank, work_counter);
     return;
 }
@@ -164,10 +168,10 @@ int main(int argc, char **argv)
 
     /*========================================================================*/
     if (myrank == 0) {
-        master(ntasks, MPI_WALKER);
+        manager(ntasks, MPI_WALKER);
     }
     else {
-        slave(myrank, MPI_WALKER);
+        worker(myrank, MPI_WALKER);
     }
     MPI_Type_free(&MPI_WALKER);
     MPI_Finalize();
