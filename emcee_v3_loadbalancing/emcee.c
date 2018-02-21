@@ -200,7 +200,7 @@ int write_step(const char *fname, const struct walker_pos *ensemble_A,
     }
 
     for(iwalker=0; iwalker<nwalkers; iwalker++){
-        fprintf(file,"%d\t%d\t%.16g",
+        fprintf(file,"%zu\t%d\t%.16g",
                 istep,
                 ensemble_A[iwalker].accept,
                 ensemble_A[iwalker].lnprob);
@@ -210,7 +210,7 @@ int write_step(const char *fname, const struct walker_pos *ensemble_A,
         fprintf(file,"\n");
     }
     for(iwalker=0; iwalker<nwalkers; iwalker++){
-        fprintf(file,"%d\t%d\t%.16g",
+        fprintf(file,"%zu\t%d\t%.16g",
                 istep,
                 ensemble_B[iwalker].accept,
                 ensemble_B[iwalker].lnprob);
@@ -274,11 +274,11 @@ void update_positions(walker_pos *walkers, const struct walker_pos *trial,
 void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
 
     walker_pos *ensemble_A, *ensemble_B, *trial;
-    size_t nsteps, nwalkers, npars, nwalkers_over_two;
-    size_t iwalker, ipar;
+    size_t nsteps, nwalkers, npars, nwalkers_over_two, iwalker, ipar;
     int nprocs, rank, irecv;
     double lnprob_tmp;
     time_t t;
+    MPI_Status status;
 
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     int current_task[nprocs];
@@ -412,11 +412,11 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
 void worker(const void *userdata, double (*lnprob)(const double *, size_t, const void *)){
 
     size_t npars;
+    MPI_Status status;
+    double pars[npars];
+    double lnprob_new;
 
     npars=(size_t)NPARS;
-
-    double pars[npars];
-    double lnprob;
 
     while(1){
         MPI_Recv(&pars[0], npars, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
@@ -424,7 +424,7 @@ void worker(const void *userdata, double (*lnprob)(const double *, size_t, const
             break;
         }
         lnprob_new = lnprob(pars, npars, userdata);
-        MPI_Send(&lnprob, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(&lnprob_new, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
 
 }
