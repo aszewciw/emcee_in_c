@@ -89,7 +89,7 @@ int main( int argc, char ** argv )
     const char fname[]="nd_gaussian_chain_cversion.dat";
 
     // start_pos = make_guess(guess,ballsize,nwalkers,npars);
-    run_chain(&argc, &argv, start_pos, a, &lnprob, gaussian_data, fname, nburn, 0);
+    run_chain(&argc, &argv, start_pos, a, &lnprob, gaussian_data, fname, nburn, 1);
     free(gaussian_data);
     free(start_pos);
 

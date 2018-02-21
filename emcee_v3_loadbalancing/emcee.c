@@ -11,24 +11,24 @@ walker_pos* allocate_walkers(size_t nwalkers){
 }
 
 /* -------------------------------------------------------------------------- */
-ensemble* allocate_ensemble(size_t nwalkers, size_t npars){
+// ensemble* allocate_ensemble(size_t nwalkers, size_t npars){
 
-    struct ensemble *self=calloc(1,sizeof(ensemble));
-    if (self==NULL) {
-        fprintf(stderr,"Could not allocate struct ensemble\n");
-        exit(EXIT_FAILURE);
-    }
+//     struct ensemble *self=calloc(1,sizeof(ensemble));
+//     if (self==NULL) {
+//         fprintf(stderr,"Could not allocate struct ensemble\n");
+//         exit(EXIT_FAILURE);
+//     }
 
-    self->nwalkers=nwalkers;
-    self->npars=npars;
+//     self->nwalkers=nwalkers;
+//     self->npars=npars;
 
-    self->walker=calloc(nwalkers,sizeof(walker_pos));
-    if (self->walker==NULL) {
-        fprintf(stderr,"Could not allocate struct walker_pos\n");
-        exit(EXIT_FAILURE);
-    }
-    return self;
-}
+//     self->walker=calloc(nwalkers,sizeof(walker_pos));
+//     if (self->walker==NULL) {
+//         fprintf(stderr,"Could not allocate struct walker_pos\n");
+//         exit(EXIT_FAILURE);
+//     }
+//     return self;
+// }
 
 /* -------------------------------------------------------------------------- */
 void free_walkers(walker_pos *w){
@@ -36,24 +36,24 @@ void free_walkers(walker_pos *w){
 }
 
 /* -------------------------------------------------------------------------- */
-void free_ensemble(ensemble *e){
-    free(e->walker);
-    free(e);
-}
+// void free_ensemble(ensemble *e){
+//     free(e->walker);
+//     free(e);
+// }
 
 /* -------------------------------------------------------------------------- */
-void free_chain(chain *c){
-    size_t nsteps, i;
-    nsteps=c->nsteps;
+// void free_chain(chain *c){
+//     size_t nsteps, i;
+//     nsteps=c->nsteps;
 
-    for(i=0; i<nsteps; i++){
-        free(c->ensemble_A[i].walker);
-        free(c->ensemble_B[i].walker);
-    }
-    free(c->ensemble_A);
-    free(c->ensemble_B);
-    free(c);
-}
+//     for(i=0; i<nsteps; i++){
+//         free(c->ensemble_A[i].walker);
+//         free(c->ensemble_B[i].walker);
+//     }
+//     free(c->ensemble_A);
+//     free(c->ensemble_B);
+//     free(c);
+// }
 
 /* -------------------------------------------------------------------------- */
 walker_pos *make_guess(double *centers, double *widths, size_t nwalkers, size_t npars)
@@ -75,7 +75,7 @@ walker_pos *make_guess(double *centers, double *widths, size_t nwalkers, size_t 
     return guess;
 }
 /* -------------------------------------------------------------------------- */
-int walker_accept(double lnprob_old,double lnprob_new,size_t npars,double z)
+int walker_accept(double lnprob_old, double lnprob_new, size_t npars, double z)
 {
     double lnprob_diff = (npars - 1.)*log(z) + lnprob_new - lnprob_old;
     double r = rand_0to1();
@@ -87,41 +87,41 @@ int walker_accept(double lnprob_old,double lnprob_new,size_t npars,double z)
     }
 }
 /* -------------------------------------------------------------------------- */
-void step_walkers(walker_pos *walkers, ensemble *comp_walkers, size_t nwalkers,
-                  double a, double (*lnprob)(const double *, size_t, const void *),
-                  const void *userdata)
-{
-    size_t iwalker,ipar,icomp,npars,ncomp;
-    int accept;
-    double par_old, par_comp;
-    double pars_new[NPARS];
-    double lnprob_old,lnprob_new,z;
+// void step_walkers(walker_pos *walkers, ensemble *comp_walkers, size_t nwalkers,
+//                   double a, double (*lnprob)(const double *, size_t, const void *),
+//                   const void *userdata)
+// {
+//     size_t iwalker,ipar,icomp,npars,ncomp;
+//     int accept;
+//     double par_old, par_comp;
+//     double pars_new[NPARS];
+//     double lnprob_old,lnprob_new,z;
 
-    ncomp=comp_walkers->nwalkers;
-    npars=comp_walkers->npars;
+//     ncomp=comp_walkers->nwalkers;
+//     npars=comp_walkers->npars;
 
-    for(iwalker=0; iwalker<nwalkers; iwalker++){
-        lnprob_old = walkers[iwalker].lnprob;
-        icomp = rand_walker(ncomp);
-        z = rand_gofz(a);
+//     for(iwalker=0; iwalker<nwalkers; iwalker++){
+//         lnprob_old = walkers[iwalker].lnprob;
+//         icomp = rand_walker(ncomp);
+//         z = rand_gofz(a);
 
-        for(ipar=0; ipar<npars; ipar++){
-            par_old = walkers[iwalker].pars[ipar];
-            par_comp = comp_walkers->walker[icomp].pars[ipar];
-            pars_new[ipar] = par_comp - z*(par_comp-par_old);
-        }
+//         for(ipar=0; ipar<npars; ipar++){
+//             par_old = walkers[iwalker].pars[ipar];
+//             par_comp = comp_walkers->walker[icomp].pars[ipar];
+//             pars_new[ipar] = par_comp - z*(par_comp-par_old);
+//         }
 
-        lnprob_new = lnprob(pars_new,npars,userdata);
-        accept = walker_accept(lnprob_old,lnprob_new,npars,z);
-        walkers[iwalker].accept = accept;
-        if(accept){
-            walkers[iwalker].lnprob=lnprob_new;
-            for(ipar=0; ipar<npars; ipar++){
-                walkers[iwalker].pars[ipar]=pars_new[ipar];
-            }
-        }
-    }
-}
+//         lnprob_new = lnprob(pars_new,npars,userdata);
+//         accept = walker_accept(lnprob_old,lnprob_new,npars,z);
+//         walkers[iwalker].accept = accept;
+//         if(accept){
+//             walkers[iwalker].lnprob=lnprob_new;
+//             for(ipar=0; ipar<npars; ipar++){
+//                 walkers[iwalker].pars[ipar]=pars_new[ipar];
+//             }
+//         }
+//     }
+// }
 /* -------------------------------------------------------------------------- */
 double rand_0to1()
 {
@@ -179,22 +179,19 @@ int write_header(const char *fname, size_t nsteps, size_t nwalkers, size_t npars
         return 0;
     }
     fprintf(file, "# nsteps=%zu nwalkers=%zu npars=%zu\n",nsteps, nwalkers, npars);
-    fprintf(file, "# accept lnprob [pars]\n");
+    fprintf(file, "# step accept lnprob [pars]\n");
 
     fclose(file);
     return 1;
 }
 
 /* -------------------------------------------------------------------------- */
-int write_step(const char *fname, const struct ensemble *ensemble_A,
-               const struct ensemble *ensemble_B)
+int write_step(const char *fname, const struct walker_pos *ensemble_A,
+               const struct walker_pos *ensemble_B, size_t nwalkers, size_t istep)
 {
-    size_t nwalkers,npars,nwalkers_over_two;
-    size_t iwalker,ipar;
+    size_t npars, iwalker, ipar;
 
-    nwalkers_over_two = ensemble_A->nwalkers;
-    nwalkers = nwalkers_over_two*2;
-    npars = ensemble_A->npars;
+    npars=(size_t)NPARS;
 
     FILE *file=fopen(fname,"a");
     if (file==NULL) {
@@ -202,23 +199,23 @@ int write_step(const char *fname, const struct ensemble *ensemble_A,
         return 0;
     }
 
-    for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
-        fprintf(file,"%d\t%.16g\t",
-                ensemble_A->walker[iwalker].accept,
-                ensemble_A->walker[iwalker].lnprob);
+    for(iwalker=0; iwalker<nwalkers; iwalker++){
+        fprintf(file,"%d\t%d\t%.16g",
+                istep,
+                ensemble_A[iwalker].accept,
+                ensemble_A[iwalker].lnprob);
         for(ipar=0; ipar<npars; ipar++){
-            fprintf(file,"%.16g\t",
-                    ensemble_A->walker[iwalker].pars[ipar]);
+            fprintf(file,"\t%.16g", ensemble_A[iwalker].pars[ipar]);
         }
         fprintf(file,"\n");
     }
-    for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
-        fprintf(file,"%d\t%.16g\t",
-                ensemble_B->walker[iwalker].accept,
-                ensemble_B->walker[iwalker].lnprob);
+    for(iwalker=0; iwalker<nwalkers; iwalker++){
+        fprintf(file,"%d\t%d\t%.16g",
+                istep,
+                ensemble_B[iwalker].accept,
+                ensemble_B[iwalker].lnprob);
         for(ipar=0; ipar<npars; ipar++){
-            fprintf(file,"%.16g\t",
-                    ensemble_B->walker[iwalker].pars[ipar]);
+            fprintf(file,"\t%.16g", ensemble_B[iwalker].pars[ipar]);
         }
         fprintf(file,"\n");
     }
@@ -228,248 +225,209 @@ int write_step(const char *fname, const struct ensemble *ensemble_A,
 }
 
 /* -------------------------------------------------------------------------- */
-void run_chain_standard(int *argc, char ***argv, walker_pos *start_pos, double a,
-                        double (*lnprob)(const double *, size_t, const void *),
-                        const void *userdata, const char *fname, int nburn)
+void create_trials(walker_pos *trial, const struct walker_pos *walkers,
+                   const struct walker_pos *comp_walkers, double *z_array,
+                   size_t nwalkers, double a)
 {
-    /*========================================================================*/
-    /* MPI stuff */
-    int nprocs, rank;
-    MPI_Init(argc,argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    size_t iwalker, ipar, icomp, npars;
+    double z, par_old, par_comp, par_new;
 
-    /* generic indices */
-    int iproc;
-    size_t iwalker, ipar, istep, iensemble;
+    npars=(size_t)NPARS;
 
-    /* chain things */
+    for(iwalker=0; iwalker<nwalkers; iwalker++){
+        icomp = rand_walker(nwalkers);
+        z = rand_gofz(a);
+        z_array[iwalker] = z;
+
+        for(ipar=0; ipar<npars; ipar++){
+            par_old = walkers[iwalker].pars[ipar];
+            par_comp = comp_walkers[icomp].pars[ipar];
+            par_new = par_comp - z*(par_comp - par_old);
+            trial[iwalker].pars[ipar] = par_new;
+        }
+    }
+}
+/* -------------------------------------------------------------------------- */
+void update_positions(walker_pos *walkers, const struct walker_pos *trial,
+                      double *z_array, size_t nwalkers)
+{
+    size_t iwalker, ipar, npars;
+    double z, lnprob_old, lnprob_new;
+    int accept;
+    npars=(size_t)NPARS;
+
+    for(iwalker=0; iwalker<nwalkers; iwalker++){
+        z = z_array[iwalker];
+        lnprob_old = walkers[iwalker].lnprob;
+        lnprob_new = trial[iwalker].lnprob;
+        accept = walker_accept(lnprob_old, lnprob_new, npars, z);
+        walkers[iwalker].accept = accept;
+        if(accept){
+            walkers[iwalker].lnprob = lnprob_new;
+            for(ipar=0; ipar<npars; ipar++){
+                walkers[iwalker].pars[ipar] = trial[iwalker].pars[ipar];
+            }
+        }
+    }
+}
+/* -------------------------------------------------------------------------- */
+void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
+
+    walker_pos *ensemble_A, *ensemble_B, *trial;
     size_t nsteps, nwalkers, npars, nwalkers_over_two;
-    double *pars;
-    ensemble *ensemble_A, *ensemble_B;
-    walker_pos *my_walkers;
-
-    /* more MPI stuff */
-    size_t slice_length, lower_ind, upper_ind, remain;
-    int mpi_disp[nprocs], counts[nprocs];
-
-    /* rng */
+    size_t iwalker, ipar;
+    int nprocs, rank, irecv;
+    double lnprob_tmp;
     time_t t;
 
-    /*========================================================================*/
-    /* Set up basic chain parameters */
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    int current_task[nprocs];
+
     nsteps   = (size_t)NSTEPS;
     nwalkers = (size_t)NWALKERS;
     npars    = (size_t)NPARS;
-    if(nwalkers%2==1) nwalkers++;   // make nwalkers even
-
     nwalkers_over_two = nwalkers/2;
+    double z_array[nwalkers_over_two];
 
-    if(nprocs>nwalkers_over_two){
-        if(rank==0){
-            fprintf(stderr, "Attempting to split a 'half-ensemble' of %zu walkers across %d processes.\n",
-                    nwalkers_over_two, nprocs);
-            fprintf(stderr, "I don't know how to do that. Change the values in the 'pars.h' file\n");
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Finalize();
-        exit(EXIT_FAILURE);
+    ensemble_A = allocate_walkers(nwalkers_over_two);
+    ensemble_B = allocate_walkers(nwalkers_over_two);
+    trial = allocate_walkers(nwalkers_over_two);
+
+    srand((unsigned)(time(&t)));
+
+    /* get initial lnprob values */
+    iwalker=0;
+    for(rank=1; rank<nprocs; rank++){
+        current_task[rank]=iwalker;
+        MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
+        iwalker++;
     }
 
-    /*========================================================================*/
-    /* make an MPI custom structure */
-    int blocklen[3] = {1, 1, npars};
-    MPI_Datatype MPI_WALKER;
-    MPI_Datatype type[3] = { MPI_INT, MPI_DOUBLE, MPI_DOUBLE };
-    MPI_Aint disp[3];
-
-    disp[0] = offsetof(walker_pos,accept);
-    disp[1] = offsetof(walker_pos,lnprob);
-    disp[2] = offsetof(walker_pos,pars);
-    MPI_Type_create_struct(3,blocklen,disp,type,&MPI_WALKER);
-    MPI_Type_commit(&MPI_WALKER);
-
-    /*========================================================================*/
-
-    /* Establish slice of walkers for each process to handle */
-    remain=nwalkers_over_two%nprocs;
-
-    /* Fill mpi_disp and counts for MPI comm */
-    for(iproc=0; iproc<nprocs; iproc++)
-    {
-        slice_length = nwalkers_over_two/nprocs;
-        lower_ind = iproc*slice_length;
-        if(iproc<remain){
-            lower_ind+=iproc;
-            slice_length++;
-        }
-        else{
-            lower_ind+=remain;
-        }
-        mpi_disp[iproc] = lower_ind;
-        counts[iproc] = slice_length;
+    /* receive lnprob's as they come in, and send out remaining walker positions */
+    while(iwalker<nwalkers){
+        MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        irecv=current_task[status.MPI_SOURCE];
+        start_pos[irecv].lnprob = lnprob_tmp;
+        current_task[status.MPI_SOURCE]=iwalker;
+        MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
+        iwalker++;
     }
 
-    /* Have each proc set its slice indices */
-    lower_ind = mpi_disp[rank];
-    slice_length = counts[rank];
-    upper_ind = lower_ind + slice_length;
+    /* receive remaining lnprobs -- should be one for each worker, but they arrive in unknown order */
+    for (rank = 1; rank < nprocs; rank++) {
+        MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        irecv=current_task[status.MPI_SOURCE];
+        start_pos[irecv].lnprob = lnprob_tmp;
+    }
 
-    /*========================================================================*/
-    /* set up ensembles, walkers */
-    ensemble_A = allocate_ensemble(nwalkers_over_two,npars);
-    ensemble_B = allocate_ensemble(nwalkers_over_two,npars);
-
-    my_walkers = allocate_walkers(slice_length);
-
-    /*========================================================================*/
-
-    /* Get things ready to begin the chain */
-    /* set up the rng here -- ensure each proc has a different seed */
-    srand((unsigned)(time(&t))+rank);
-
-    /* Fill the two ensembles with walker positions */
-    /* No need for broadcasting here because all procs have the same copy of start_pos from main */
+    /* fill the two ensembles with starting positions */
     for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
+        ensemble_A[iwalker].accept=1;
+        ensemble_B[iwalker].accept=1;
+        ensemble_A[iwalker].lnprob=start_pos[iwalker].lnprob;
+        ensemble_B[iwalker].lnprob=start_pos[iwalker+nwalkers_over_two].lnprob;
         for(ipar=0; ipar<npars; ipar++){
-            ensemble_A->walker[iwalker].pars[ipar]=start_pos[iwalker].pars[ipar];
-            ensemble_B->walker[iwalker].pars[ipar]=start_pos[iwalker+nwalkers_over_two].pars[ipar];
+            ensemble_A[iwalker].pars[ipar]=start_pos[iwalker].pars[ipar];
+            ensemble_B[iwalker].pars[ipar]=start_pos[iwalker+nwalkers_over_two].pars[ipar];
         }
     }
 
-    /* Fill each proc's walkers with appropriate starting positions and get lnprob */
-    /* We'll first do ensemble_B */
-    for(iwalker=0; iwalker<slice_length; iwalker++){
-        iensemble = iwalker+lower_ind;
-        for(ipar=0; ipar<npars; ipar++){
-            my_walkers[iwalker].pars[ipar] = ensemble_B->walker[iensemble].pars[ipar];
-        }
-        my_walkers[iwalker].accept=1;
-        pars=my_walkers[iwalker].pars;
-        my_walkers[iwalker].lnprob=lnprob(pars,npars,userdata);
-    }
+    write_header(fname,nsteps, nwalkers, npars);
+    write_step(fname, ensemble_A, ensemble_B, nwalkers_over_two, 0);
 
-    /* gather data from each proc */
-    MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                   &ensemble_B->walker[0], counts, mpi_disp,
-                   MPI_WALKER, MPI_COMM_WORLD);
-
-
-    /* Now we'll do ensemble_A */
-    for(iwalker=0; iwalker<slice_length; iwalker++){
-        iensemble = iwalker+lower_ind;
-        for(ipar=0; ipar<npars; ipar++){
-            my_walkers[iwalker].pars[ipar] = ensemble_A->walker[iensemble].pars[ipar];
-        }
-        my_walkers[iwalker].accept=1;
-        pars=my_walkers[iwalker].pars;
-        my_walkers[iwalker].lnprob=lnprob(pars,npars,userdata);
-    }
-
-    /* gather data from each proc */
-    MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                   &ensemble_A->walker[0], counts, mpi_disp,
-                   MPI_WALKER, MPI_COMM_WORLD);
-
-    /*=============================== burn-in ================================*/
-    for(istep=0; istep<nburn; istep++){
-
-        /* set walkers to positions for ensemble_A */
-        for(iwalker=0; iwalker<slice_length; iwalker++){
-            iensemble = iwalker+lower_ind;
-            my_walkers[iwalker].accept = ensemble_A->walker[iensemble].accept;
-            my_walkers[iwalker].lnprob = ensemble_A->walker[iensemble].lnprob;
-            for(ipar=0; ipar<npars; ipar++){
-                my_walkers[iwalker].pars[ipar] = ensemble_A->walker[iensemble].pars[ipar];
-            }
-        }
-        /* move my_walkers based on ensemble_B */
-
-        step_walkers(my_walkers, ensemble_B, slice_length, a, lnprob, userdata);
-
-        /* allgatherv new positions of A */
-        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                       &ensemble_A->walker[0], counts, mpi_disp,
-                       MPI_WALKER, MPI_COMM_WORLD);
-
-        /* set walkers to positions for ensemble_B */
-        for(iwalker=0; iwalker<slice_length; iwalker++){
-            iensemble = iwalker+lower_ind;
-            my_walkers[iwalker].accept = ensemble_B->walker[iensemble].accept;
-            my_walkers[iwalker].lnprob = ensemble_B->walker[iensemble].lnprob;
-            for(ipar=0; ipar<npars; ipar++){
-                my_walkers[iwalker].pars[ipar] = ensemble_B->walker[iensemble].pars[ipar];
-            }
-        }
-
-        /* move ensemble_B based on ensemble_A */
-        step_walkers(my_walkers, ensemble_A, slice_length, a, lnprob, userdata);
-
-        /* allgatherv new positions of B */
-        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                       &ensemble_B->walker[0], counts, mpi_disp,
-                       MPI_WALKER, MPI_COMM_WORLD);
-
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-
-    // write header and first step
-    if(rank==0) write_header(fname,nsteps,nwalkers,npars);
-    if(rank==0) write_step(fname,ensemble_A,ensemble_B);
-
-    /*========================================================================*/
     /* begin the chain */
     for(istep=1; istep<nsteps; istep++){
+        /*----------------------------- ensemble A ---------------------------*/
+        create_trials(trial, ensemble_A, ensemble_B, z_array, nwalkers_over_two, a);
 
-        /* set walkers to positions for ensemble_A */
-        for(iwalker=0; iwalker<slice_length; iwalker++){
-            iensemble = iwalker+lower_ind;
-            my_walkers[iwalker].accept = ensemble_A->walker[iensemble].accept;
-            my_walkers[iwalker].lnprob = ensemble_A->walker[iensemble].lnprob;
-            for(ipar=0; ipar<npars; ipar++){
-                my_walkers[iwalker].pars[ipar] = ensemble_A->walker[iensemble].pars[ipar];
-            }
-        }
-        /* move my_walkers based on ensemble_B */
-
-        step_walkers(my_walkers, ensemble_B, slice_length, a, lnprob, userdata);
-
-        /* allgatherv new positions of A */
-        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                       &ensemble_A->walker[0], counts, mpi_disp,
-                       MPI_WALKER, MPI_COMM_WORLD);
-
-        /* set walkers to positions for ensemble_B */
-        for(iwalker=0; iwalker<slice_length; iwalker++){
-            iensemble = iwalker+lower_ind;
-            my_walkers[iwalker].accept = ensemble_B->walker[iensemble].accept;
-            my_walkers[iwalker].lnprob = ensemble_B->walker[iensemble].lnprob;
-            for(ipar=0; ipar<npars; ipar++){
-                my_walkers[iwalker].pars[ipar] = ensemble_B->walker[iensemble].pars[ipar];
-            }
+        /* send out first batch of trial positions */
+        iwalker=0;
+        for(rank=1; rank<nprocs; rank++){
+            current_task[rank]=iwalker;
+            MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
+            iwalker++;
         }
 
-        /* move ensemble_B based on ensemble_A */
-        step_walkers(my_walkers, ensemble_A, slice_length, a, lnprob, userdata);
+        /* receive lnprob's as they come in, and send out remaining walker positions */
+        while(iwalker<nwalkers_over_two){
+            MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            irecv=current_task[status.MPI_SOURCE];
+            trial[irecv].lnprob = lnprob_tmp;
+            current_task[status.MPI_SOURCE]=iwalker;
+            MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
+            iwalker++;
+        }
 
-        /* allgatherv new positions of B */
-        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                       &ensemble_B->walker[0], counts, mpi_disp,
-                       MPI_WALKER, MPI_COMM_WORLD);
+        /* receive remaining lnprobs -- should be one for each worker, but they arrive in unknown order */
+        for (rank = 1; rank < nprocs; rank++) {
+            MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            irecv=current_task[status.MPI_SOURCE];
+            trial[irecv].lnprob = lnprob_tmp;
+        }
 
-        if(rank==0) write_step(fname,ensemble_A,ensemble_B);
-        MPI_Barrier(MPI_COMM_WORLD);
+        /* update walker positions */
+        update_positions(ensemble_A, trial, z_array, nwalkers_over_two);
+
+        /*----------------------------- ensemble B ---------------------------*/
+        create_trials(trial, ensemble_B, ensemble_A, z_array, nwalkers_over_two, a);
+
+        /* send out first batch of trial positions */
+        iwalker=0;
+        for(rank=1; rank<nprocs; rank++){
+            current_task[rank]=iwalker;
+            MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
+            iwalker++;
+        }
+
+        /* receive lnprob's as they come in, and send out remaining walker positions */
+        while(iwalker<nwalkers_over_two){
+            MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            irecv=current_task[status.MPI_SOURCE];
+            trial[irecv].lnprob = lnprob_tmp;
+            current_task[status.MPI_SOURCE]=iwalker;
+            MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
+            iwalker++;
+        }
+
+        /* receive remaining lnprobs -- should be one for each worker, but they arrive in unknown order */
+        for (rank = 1; rank < nprocs; rank++) {
+            MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            irecv=current_task[status.MPI_SOURCE];
+            trial[irecv].lnprob = lnprob_tmp;
+        }
+
+        /* update walker positions */
+        update_positions(ensemble_B, trial, z_array, nwalkers_over_two);
+
+        write_step(fname, ensemble_A, ensemble_B, nwalkers_over_two, istep);
     }
 
-    free_ensemble(ensemble_A);
-    free_ensemble(ensemble_B);
-    free_walkers(my_walkers);
-
-    /* end MPI */
-    MPI_Type_free(&MPI_WALKER);
-    MPI_Finalize();
+    /* chain complete -- tell workers to exit */
+    for (rank = 1; rank < nprocs; rank++) {
+        MPI_Send(0, 0, MPI_DOUBLE, rank, DIETAG, MPI_COMM_WORLD);
+    }
 }
 
+/* -------------------------------------------------------------------------- */
+void worker(const void *userdata, double (*lnprob)(const double *, size_t, const void *)){
+
+    size_t npars;
+
+    npars=(size_t)NPARS;
+
+    double pars[npars];
+    double lnprob;
+
+    while(1){
+        MPI_Recv(&pars[0], npars, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        if (status.MPI_TAG == DIETAG) {
+            break;
+        }
+        lnprob_new = lnprob(pars, npars, userdata);
+        MPI_Send(&lnprob, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+    }
+
+}
 /* -------------------------------------------------------------------------- */
 void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, double a,
                              double (*lnprob)(const double *, size_t, const void *),
@@ -477,41 +435,33 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
 {
     /*========================================================================*/
     /* MPI stuff */
-    int nprocs, rank;
+    int nprocs, rank, nworkers;
     MPI_Init(argc,argv);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    /* generic indices */
-    int iproc;
-    size_t iwalker, ipar, istep, iensemble;
-
     /* chain things */
     size_t nsteps, nwalkers, npars, nwalkers_over_two;
     double *pars;
-    ensemble *ensemble_A, *ensemble_B;
-    walker_pos *my_walkers;
-
-    /* more MPI stuff */
-    size_t slice_length, lower_ind, upper_ind, remain;
-    int mpi_disp[nprocs], counts[nprocs];
-
-    /* rng */
-    time_t t;
 
     /*========================================================================*/
-    /* Set up basic chain parameters */
-    nsteps   = (size_t)NSTEPS;
+    /* check that nwalkers is even */
     nwalkers = (size_t)NWALKERS;
-    npars    = (size_t)NPARS;
-    if(nwalkers%2==1) nwalkers++;   // make nwalkers even
+    if(nwalkers%2==1){
+        if(rank==0){
+            fprintf(stderr, "Use an even number of walkers. They will be split into two ensembles\n");
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Finalize();
+        exit(EXIT_FAILURE);
+    }
 
     nwalkers_over_two = nwalkers/2;
 
-    if(nprocs>nwalkers_over_two){
+    if(nworkers>nwalkers_over_two){
         if(rank==0){
-            fprintf(stderr, "Attempting to split a 'half-ensemble' of %zu walkers across %d processes.\n",
-                    nwalkers_over_two, nprocs);
+            fprintf(stderr, "Attempting to split a 'half-ensemble' of %zu walkers across %d workers.\n",
+                    nwalkers_over_two, nworkers);
             fprintf(stderr, "I don't know how to do that. Change the values in the 'pars.h' file\n");
         }
         MPI_Barrier(MPI_COMM_WORLD);
@@ -519,197 +469,14 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
         exit(EXIT_FAILURE);
     }
 
-    /*========================================================================*/
-    /* make an MPI custom structure */
-    int blocklen[3] = {1, 1, npars};
-    MPI_Datatype MPI_WALKER;
-    MPI_Datatype type[3] = { MPI_INT, MPI_DOUBLE, MPI_DOUBLE };
-    MPI_Aint disp[3];
-
-    disp[0] = offsetof(walker_pos,accept);
-    disp[1] = offsetof(walker_pos,lnprob);
-    disp[2] = offsetof(walker_pos,pars);
-    MPI_Type_create_struct(3,blocklen,disp,type,&MPI_WALKER);
-    MPI_Type_commit(&MPI_WALKER);
-
-    /*========================================================================*/
-
-    /* Establish slice of walkers for each process to handle */
-    remain=nwalkers_over_two%nprocs;
-
-    /* Fill mpi_disp and counts for MPI comm */
-    for(iproc=0; iproc<nprocs; iproc++)
-    {
-        slice_length = nwalkers_over_two/nprocs;
-        lower_ind = iproc*slice_length;
-        if(iproc<remain){
-            lower_ind+=iproc;
-            slice_length++;
-        }
-        else{
-            lower_ind+=remain;
-        }
-        mpi_disp[iproc] = lower_ind;
-        counts[iproc] = slice_length;
+    if(rank==0){
+        manager(start_pos, a, fname, nburn);
     }
-
-    /* Have each proc set its slice indices */
-    lower_ind = mpi_disp[rank];
-    slice_length = counts[rank];
-    upper_ind = lower_ind + slice_length;
-
-    /*========================================================================*/
-    /* set up ensembles, walkers */
-    ensemble_A = allocate_ensemble(nwalkers_over_two,npars);
-    ensemble_B = allocate_ensemble(nwalkers_over_two,npars);
-
-    my_walkers = allocate_walkers(slice_length);
-
-    /*========================================================================*/
-
-    /* Get things ready to begin the chain */
-    /* set up the rng here -- ensure each proc has a different seed */
-    srand((unsigned)(time(&t))+rank);
-
-    /* Fill the two ensembles with walker positions */
-    /* No need for broadcasting here because all procs have the same copy of start_pos from main */
-    for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
-        for(ipar=0; ipar<npars; ipar++){
-            ensemble_A->walker[iwalker].pars[ipar]=start_pos[iwalker].pars[ipar];
-            ensemble_B->walker[iwalker].pars[ipar]=start_pos[iwalker+nwalkers_over_two].pars[ipar];
-        }
+    else{
+        worker(userdata, lnprob);
     }
-
-    /* Fill each proc's walkers with appropriate starting positions and get lnprob */
-    /* We'll first do ensemble_B */
-    for(iwalker=0; iwalker<slice_length; iwalker++){
-        iensemble = iwalker+lower_ind;
-        for(ipar=0; ipar<npars; ipar++){
-            my_walkers[iwalker].pars[ipar] = ensemble_B->walker[iensemble].pars[ipar];
-        }
-        my_walkers[iwalker].accept=1;
-        pars=my_walkers[iwalker].pars;
-        my_walkers[iwalker].lnprob=lnprob(pars,npars,userdata);
-    }
-
-    /* gather data from each proc */
-    MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                   &ensemble_B->walker[0], counts, mpi_disp,
-                   MPI_WALKER, MPI_COMM_WORLD);
-
-
-    /* Now we'll do ensemble_A */
-    for(iwalker=0; iwalker<slice_length; iwalker++){
-        iensemble = iwalker+lower_ind;
-        for(ipar=0; ipar<npars; ipar++){
-            my_walkers[iwalker].pars[ipar] = ensemble_A->walker[iensemble].pars[ipar];
-        }
-        my_walkers[iwalker].accept=1;
-        pars=my_walkers[iwalker].pars;
-        my_walkers[iwalker].lnprob=lnprob(pars,npars,userdata);
-    }
-
-    /* gather data from each proc */
-    MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                   &ensemble_A->walker[0], counts, mpi_disp,
-                   MPI_WALKER, MPI_COMM_WORLD);
-
-    /*=============================== burn-in ================================*/
-    for(istep=0; istep<nburn; istep++){
-
-        /* set walkers to positions for ensemble_A */
-        for(iwalker=0; iwalker<slice_length; iwalker++){
-            iensemble = iwalker+lower_ind;
-            my_walkers[iwalker].accept = ensemble_A->walker[iensemble].accept;
-            my_walkers[iwalker].lnprob = ensemble_A->walker[iensemble].lnprob;
-            for(ipar=0; ipar<npars; ipar++){
-                my_walkers[iwalker].pars[ipar] = ensemble_A->walker[iensemble].pars[ipar];
-            }
-        }
-        /* move my_walkers based on ensemble_B */
-
-        step_walkers(my_walkers, ensemble_B, slice_length, a, lnprob, userdata);
-
-        /* allgatherv new positions of A */
-        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                       &ensemble_A->walker[0], counts, mpi_disp,
-                       MPI_WALKER, MPI_COMM_WORLD);
-
-        /* set walkers to positions for ensemble_B */
-        for(iwalker=0; iwalker<slice_length; iwalker++){
-            iensemble = iwalker+lower_ind;
-            my_walkers[iwalker].accept = ensemble_B->walker[iensemble].accept;
-            my_walkers[iwalker].lnprob = ensemble_B->walker[iensemble].lnprob;
-            for(ipar=0; ipar<npars; ipar++){
-                my_walkers[iwalker].pars[ipar] = ensemble_B->walker[iensemble].pars[ipar];
-            }
-        }
-
-        /* move ensemble_B based on ensemble_A */
-        step_walkers(my_walkers, ensemble_A, slice_length, a, lnprob, userdata);
-
-        /* allgatherv new positions of B */
-        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                       &ensemble_B->walker[0], counts, mpi_disp,
-                       MPI_WALKER, MPI_COMM_WORLD);
-
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-
-    // write header and first step
-    if(rank==0) write_header(fname,nsteps,nwalkers,npars);
-    if(rank==0) write_step(fname,ensemble_A,ensemble_B);
-
-    /*========================================================================*/
-    /* begin the chain */
-    for(istep=1; istep<nsteps; istep++){
-
-        /* set walkers to positions for ensemble_A */
-        for(iwalker=0; iwalker<slice_length; iwalker++){
-            iensemble = iwalker+lower_ind;
-            my_walkers[iwalker].accept = ensemble_A->walker[iensemble].accept;
-            my_walkers[iwalker].lnprob = ensemble_A->walker[iensemble].lnprob;
-            for(ipar=0; ipar<npars; ipar++){
-                my_walkers[iwalker].pars[ipar] = ensemble_A->walker[iensemble].pars[ipar];
-            }
-        }
-        /* move my_walkers based on ensemble_B */
-
-        step_walkers(my_walkers, ensemble_B, slice_length, a, lnprob, userdata);
-
-        /* allgatherv new positions of A */
-        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                       &ensemble_A->walker[0], counts, mpi_disp,
-                       MPI_WALKER, MPI_COMM_WORLD);
-
-        /* set walkers to positions for ensemble_B */
-        for(iwalker=0; iwalker<slice_length; iwalker++){
-            iensemble = iwalker+lower_ind;
-            my_walkers[iwalker].accept = ensemble_B->walker[iensemble].accept;
-            my_walkers[iwalker].lnprob = ensemble_B->walker[iensemble].lnprob;
-            for(ipar=0; ipar<npars; ipar++){
-                my_walkers[iwalker].pars[ipar] = ensemble_B->walker[iensemble].pars[ipar];
-            }
-        }
-
-        /* move ensemble_B based on ensemble_A */
-        step_walkers(my_walkers, ensemble_A, slice_length, a, lnprob, userdata);
-
-        /* allgatherv new positions of B */
-        MPI_Allgatherv(&my_walkers[0], slice_length, MPI_WALKER,
-                       &ensemble_B->walker[0], counts, mpi_disp,
-                       MPI_WALKER, MPI_COMM_WORLD);
-
-        if(rank==0) write_step(fname,ensemble_A,ensemble_B);
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-
-    free_ensemble(ensemble_A);
-    free_ensemble(ensemble_B);
-    free_walkers(my_walkers);
 
     /* end MPI */
-    MPI_Type_free(&MPI_WALKER);
     MPI_Finalize();
 }
 
@@ -723,6 +490,8 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
         run_chain_loadbalancing(argc,argv,start_pos,a,lnprob,userdata,fname,nburn);
     }
     else{
-        run_chain_standard(argc,argv,start_pos,a,lnprob,userdata,fname,nburn);
+        // run_chain_standard(argc,argv,start_pos,a,lnprob,userdata,fname,nburn);
+        fprintf(stderr, "Error: load_balancing must be enabled currently\n");
+        exit(EXIT_FAILURE);
     }
 }
