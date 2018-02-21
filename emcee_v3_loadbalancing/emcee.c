@@ -278,6 +278,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
     int nprocs, rank, irecv;
     double lnprob_tmp;
     time_t t;
+    double *z_array;
     MPI_Status status;
 
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -287,7 +288,8 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
     nwalkers = (size_t)NWALKERS;
     npars    = (size_t)NPARS;
     nwalkers_over_two = nwalkers/2;
-    double z_array[nwalkers_over_two];
+    // double z_array[nwalkers_over_two];
+    z_array = calloc(nwalkers_over_two, sizeof(double));
 
     ensemble_A = allocate_walkers(nwalkers_over_two);
     ensemble_B = allocate_walkers(nwalkers_over_two);
@@ -407,6 +409,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
         MPI_Send(0, 0, MPI_DOUBLE, rank, DIETAG, MPI_COMM_WORLD);
     }
 
+    free(z_array);
     free_walkers(ensemble_A);
     free_walkers(ensemble_B);
     free_walkers(trial);
@@ -417,11 +420,12 @@ void worker(const void *userdata, double (*lnprob)(const double *, size_t, const
 
     size_t npars;
     MPI_Status status;
-    double pars[npars];
+    // double pars[npars];
+    double *pars;
     double lnprob_new;
 
     npars=(size_t)NPARS;
-
+    pars=calloc(npars, sizeof(double));
     while(1){
         MPI_Recv(&pars[0], npars, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         if (status.MPI_TAG == DIETAG) {
@@ -430,6 +434,7 @@ void worker(const void *userdata, double (*lnprob)(const double *, size_t, const
         lnprob_new = lnprob(pars, npars, userdata);
         MPI_Send(&lnprob_new, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
+    free(pars);
 
 }
 /* -------------------------------------------------------------------------- */
