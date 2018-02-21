@@ -279,10 +279,12 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
     double lnprob_tmp;
     time_t t;
     double *z_array;
+    int *current_task;
     MPI_Status status;
 
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    int current_task[nprocs];
+    // int current_task[nprocs];
+    current_task = calloc(nprocs,sizeof(int));
 
     nsteps   = (size_t)NSTEPS;
     nwalkers = (size_t)NWALKERS;
@@ -410,6 +412,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
     }
 
     free(z_array);
+    free(current_task);
     free_walkers(ensemble_A);
     free_walkers(ensemble_B);
     free_walkers(trial);
