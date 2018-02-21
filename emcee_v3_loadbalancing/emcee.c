@@ -461,6 +461,7 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
     }
 
     nwalkers_over_two = nwalkers/2;
+    nworkers = nprocs-1;
 
     if(nworkers>nwalkers_over_two){
         if(rank==0){
