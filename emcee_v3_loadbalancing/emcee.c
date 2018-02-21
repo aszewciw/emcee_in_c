@@ -406,6 +406,10 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
     for (rank = 1; rank < nprocs; rank++) {
         MPI_Send(0, 0, MPI_DOUBLE, rank, DIETAG, MPI_COMM_WORLD);
     }
+
+    free_walkers(ensemble_A);
+    free_walkers(ensemble_B);
+    free_walkers(trial);
 }
 
 /* -------------------------------------------------------------------------- */
