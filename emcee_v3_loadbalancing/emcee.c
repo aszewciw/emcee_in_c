@@ -274,7 +274,7 @@ void update_positions(walker_pos *walkers, const struct walker_pos *trial,
 void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
 
     walker_pos *ensemble_A, *ensemble_B, *trial;
-    size_t nsteps, nwalkers, npars, nwalkers_over_two, iwalker, ipar;
+    size_t nsteps, nwalkers, npars, nwalkers_over_two, iwalker, ipar, istep;
     int nprocs, rank, irecv;
     double lnprob_tmp;
     time_t t;
