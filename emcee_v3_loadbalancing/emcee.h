@@ -15,6 +15,7 @@
 
 /* position of a single walker */
 typedef struct walker_pos{
+    int rank;           /* process rank that handled the computation */
     int accept;         /* were the current pars part of an accepted step or not (1 or 0) */
     double lnprob;      /* ln of probability for current pars */
     double pars[NPARS]; /* parameters */

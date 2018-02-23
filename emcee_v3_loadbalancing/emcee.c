@@ -11,49 +11,9 @@ walker_pos* allocate_walkers(size_t nwalkers){
 }
 
 /* -------------------------------------------------------------------------- */
-// ensemble* allocate_ensemble(size_t nwalkers, size_t npars){
-
-//     struct ensemble *self=calloc(1,sizeof(ensemble));
-//     if (self==NULL) {
-//         fprintf(stderr,"Could not allocate struct ensemble\n");
-//         exit(EXIT_FAILURE);
-//     }
-
-//     self->nwalkers=nwalkers;
-//     self->npars=npars;
-
-//     self->walker=calloc(nwalkers,sizeof(walker_pos));
-//     if (self->walker==NULL) {
-//         fprintf(stderr,"Could not allocate struct walker_pos\n");
-//         exit(EXIT_FAILURE);
-//     }
-//     return self;
-// }
-
-/* -------------------------------------------------------------------------- */
 void free_walkers(walker_pos *w){
     free(w);
 }
-
-/* -------------------------------------------------------------------------- */
-// void free_ensemble(ensemble *e){
-//     free(e->walker);
-//     free(e);
-// }
-
-/* -------------------------------------------------------------------------- */
-// void free_chain(chain *c){
-//     size_t nsteps, i;
-//     nsteps=c->nsteps;
-
-//     for(i=0; i<nsteps; i++){
-//         free(c->ensemble_A[i].walker);
-//         free(c->ensemble_B[i].walker);
-//     }
-//     free(c->ensemble_A);
-//     free(c->ensemble_B);
-//     free(c);
-// }
 
 /* -------------------------------------------------------------------------- */
 walker_pos *make_guess(double *centers, double *widths, size_t nwalkers, size_t npars)
@@ -86,42 +46,7 @@ int walker_accept(double lnprob_old, double lnprob_new, size_t npars, double z)
         return 0;
     }
 }
-/* -------------------------------------------------------------------------- */
-// void step_walkers(walker_pos *walkers, ensemble *comp_walkers, size_t nwalkers,
-//                   double a, double (*lnprob)(const double *, size_t, const void *),
-//                   const void *userdata)
-// {
-//     size_t iwalker,ipar,icomp,npars,ncomp;
-//     int accept;
-//     double par_old, par_comp;
-//     double pars_new[NPARS];
-//     double lnprob_old,lnprob_new,z;
 
-//     ncomp=comp_walkers->nwalkers;
-//     npars=comp_walkers->npars;
-
-//     for(iwalker=0; iwalker<nwalkers; iwalker++){
-//         lnprob_old = walkers[iwalker].lnprob;
-//         icomp = rand_walker(ncomp);
-//         z = rand_gofz(a);
-
-//         for(ipar=0; ipar<npars; ipar++){
-//             par_old = walkers[iwalker].pars[ipar];
-//             par_comp = comp_walkers->walker[icomp].pars[ipar];
-//             pars_new[ipar] = par_comp - z*(par_comp-par_old);
-//         }
-
-//         lnprob_new = lnprob(pars_new,npars,userdata);
-//         accept = walker_accept(lnprob_old,lnprob_new,npars,z);
-//         walkers[iwalker].accept = accept;
-//         if(accept){
-//             walkers[iwalker].lnprob=lnprob_new;
-//             for(ipar=0; ipar<npars; ipar++){
-//                 walkers[iwalker].pars[ipar]=pars_new[ipar];
-//             }
-//         }
-//     }
-// }
 /* -------------------------------------------------------------------------- */
 double rand_0to1()
 {
@@ -179,7 +104,7 @@ int write_header(const char *fname, size_t nsteps, size_t nwalkers, size_t npars
         return 0;
     }
     fprintf(file, "# nsteps=%zu nwalkers=%zu npars=%zu\n",nsteps, nwalkers, npars);
-    fprintf(file, "# step accept lnprob [pars]\n");
+    fprintf(file, "# step proc_id accept lnprob [pars]\n");
 
     fclose(file);
     return 1;
@@ -200,8 +125,9 @@ int write_step(const char *fname, const struct walker_pos *ensemble_A,
     }
 
     for(iwalker=0; iwalker<nwalkers; iwalker++){
-        fprintf(file,"%zu\t%d\t%.16g",
+        fprintf(file,"%zu\t%d\t%d\t%.16g",
                 istep,
+                ensemble_A[iwalker].rank,
                 ensemble_A[iwalker].accept,
                 ensemble_A[iwalker].lnprob);
         for(ipar=0; ipar<npars; ipar++){
@@ -210,8 +136,9 @@ int write_step(const char *fname, const struct walker_pos *ensemble_A,
         fprintf(file,"\n");
     }
     for(iwalker=0; iwalker<nwalkers; iwalker++){
-        fprintf(file,"%zu\t%d\t%.16g",
+        fprintf(file,"%zu\t%d\t%d\t%.16g",
                 istep,
+                ensemble_B[iwalker].rank,
                 ensemble_B[iwalker].accept,
                 ensemble_B[iwalker].lnprob);
         for(ipar=0; ipar<npars; ipar++){
@@ -232,7 +159,7 @@ void create_trials(walker_pos *trial, const struct walker_pos *walkers,
     size_t iwalker, ipar, icomp, npars;
     double z, par_old, par_comp, par_new;
 
-    npars=(size_t)NPARS;
+    npars = (size_t)NPARS;
 
     for(iwalker=0; iwalker<nwalkers; iwalker++){
         icomp = rand_walker(nwalkers);
@@ -254,7 +181,7 @@ void update_positions(walker_pos *walkers, const struct walker_pos *trial,
     size_t iwalker, ipar, npars;
     double z, lnprob_old, lnprob_new;
     int accept;
-    npars=(size_t)NPARS;
+    npars = (size_t)NPARS;
 
     for(iwalker=0; iwalker<nwalkers; iwalker++){
         z = z_array[iwalker];
@@ -283,14 +210,12 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
     MPI_Status status;
 
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    // int current_task[nprocs];
-    current_task = calloc(nprocs,sizeof(int));
+    current_task = calloc(nprocs, sizeof(int));
 
     nsteps   = (size_t)NSTEPS;
     nwalkers = (size_t)NWALKERS;
     npars    = (size_t)NPARS;
     nwalkers_over_two = nwalkers/2;
-    // double z_array[nwalkers_over_two];
     z_array = calloc(nwalkers_over_two, sizeof(double));
 
     ensemble_A = allocate_walkers(nwalkers_over_two);
@@ -312,6 +237,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
         MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         irecv=current_task[status.MPI_SOURCE];
         start_pos[irecv].lnprob = lnprob_tmp;
+        start_pos[irecv].rank = status.MPI_SOURCE;
         current_task[status.MPI_SOURCE]=iwalker;
         MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
         iwalker++;
@@ -321,6 +247,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
     for (rank = 1; rank < nprocs; rank++) {
         MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         irecv=current_task[status.MPI_SOURCE];
+        start_pos[irecv].rank = status.MPI_SOURCE;
         start_pos[irecv].lnprob = lnprob_tmp;
     }
 
@@ -355,9 +282,10 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
         /* receive lnprob's as they come in, and send out remaining walker positions */
         while(iwalker<nwalkers_over_two){
             MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            irecv=current_task[status.MPI_SOURCE];
+            irecv = current_task[status.MPI_SOURCE];
             trial[irecv].lnprob = lnprob_tmp;
-            current_task[status.MPI_SOURCE]=iwalker;
+            ensemble_A[irecv].rank = status.MPI_SOURCE;
+            current_task[status.MPI_SOURCE] = iwalker;
             MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
@@ -365,8 +293,9 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
         /* receive remaining lnprobs -- should be one for each worker, but they arrive in unknown order */
         for (rank = 1; rank < nprocs; rank++) {
             MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            irecv=current_task[status.MPI_SOURCE];
+            irecv = current_task[status.MPI_SOURCE];
             trial[irecv].lnprob = lnprob_tmp;
+            ensemble_A[irecv].rank = status.MPI_SOURCE;
         }
 
         /* update walker positions */
@@ -378,7 +307,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
         /* send out first batch of trial positions */
         iwalker=0;
         for(rank=1; rank<nprocs; rank++){
-            current_task[rank]=iwalker;
+            current_task[rank] = iwalker;
             MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
@@ -386,9 +315,10 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
         /* receive lnprob's as they come in, and send out remaining walker positions */
         while(iwalker<nwalkers_over_two){
             MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            irecv=current_task[status.MPI_SOURCE];
+            irecv = current_task[status.MPI_SOURCE];
             trial[irecv].lnprob = lnprob_tmp;
-            current_task[status.MPI_SOURCE]=iwalker;
+            ensemble_B[irecv].rank = status.MPI_SOURCE;
+            current_task[status.MPI_SOURCE] = iwalker;
             MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
@@ -396,8 +326,9 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
         /* receive remaining lnprobs -- should be one for each worker, but they arrive in unknown order */
         for (rank = 1; rank < nprocs; rank++) {
             MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            irecv=current_task[status.MPI_SOURCE];
+            irecv = current_task[status.MPI_SOURCE];
             trial[irecv].lnprob = lnprob_tmp;
+            ensemble_B[irecv].rank = status.MPI_SOURCE;
         }
 
         /* update walker positions */
@@ -423,7 +354,6 @@ void worker(const void *userdata, double (*lnprob)(const double *, size_t, const
 
     size_t npars;
     MPI_Status status;
-    // double pars[npars];
     double *pars;
     double lnprob_new;
 
