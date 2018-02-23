@@ -9,7 +9,9 @@ def main():
     nwalkers=20
     nsteps=20
 
-    walker_id = np.arange(nwalkers)
+    walker_id = np.zeros((nsteps,nwalkers))
+    for i in range(nsteps):
+        walker_id[i,:] = np.arange(nwalkers)
 
     step,rank = np.genfromtxt(chain_fname,usecols=[0,1],unpack=True,comments='#')
 
