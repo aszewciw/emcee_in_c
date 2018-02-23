@@ -22,7 +22,7 @@ cov = np.dot(cov,cov)
 
 icov = np.linalg.inv(cov)
 
-nwalkers = 250
+nwalkers = 20
 guesses = np.random.rand(ndim * nwalkers).reshape((nwalkers, ndim))
 
 np.savetxt(data_fname,means,fmt='%.12e')
