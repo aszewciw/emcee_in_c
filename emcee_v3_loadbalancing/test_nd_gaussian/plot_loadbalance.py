@@ -20,10 +20,10 @@ def main():
     plt.clf()
     plt.figure(1)
     plt_name = 'load_balance_test.png'
-    cmap = matplotlib.colors.ListedColormap(['red', 'green', 'blue'])
+    cmap = matplotlib.colors.ListedColormap(['magenta', 'cyan', 'blue'])
     bounds = [1,2,3,4]
     norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
-    plt.scatter(step,walker_id,c=rank,cmap=cmap, norm=norm)
+    plt.scatter(step,walker_id,c=rank,cmap=cmap, s=20, norm=norm)
     plt.savefig(plt_name)
 
 if __name__ == '__main__':
