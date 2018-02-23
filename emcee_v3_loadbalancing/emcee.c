@@ -257,6 +257,8 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
         ensemble_B[iwalker].accept=1;
         ensemble_A[iwalker].lnprob=start_pos[iwalker].lnprob;
         ensemble_B[iwalker].lnprob=start_pos[iwalker+nwalkers_over_two].lnprob;
+        ensemble_A[iwalker].rank=start_pos[iwalker].rank;
+        ensemble_B[iwalker].rank=start_pos[iwalker+nwalkers_over_two].rank;
         for(ipar=0; ipar<npars; ipar++){
             ensemble_A[iwalker].pars[ipar]=start_pos[iwalker].pars[ipar];
             ensemble_B[iwalker].pars[ipar]=start_pos[iwalker+nwalkers_over_two].pars[ipar];
