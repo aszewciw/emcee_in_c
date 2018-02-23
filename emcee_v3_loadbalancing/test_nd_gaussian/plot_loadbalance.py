@@ -20,7 +20,7 @@ def main():
     plt_name = 'load_balance_test.png'
     cmap = matplotlib.colors.ListedColormap(['red', 'green', 'blue'])
     bounds = [2,3,4]
-    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+    norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
     plt.scatter(step,walker_id,c=rank,cmap=cmap, norm=norm)
     plt.savefig(plt_name)
 
