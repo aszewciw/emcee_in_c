@@ -20,10 +20,14 @@ def main():
     plt.clf()
     plt.figure(1)
     plt_name = 'load_balance_test.png'
-    cmap = matplotlib.colors.ListedColormap(['magenta', 'cyan', 'blue'])
+    cmap = matplotlib.colors.ListedColormap(['red', 'cyan', 'blue'])
     bounds = [1,2,3,4]
     norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
     plt.scatter(step,walker_id,c=rank,cmap=cmap, s=100, norm=norm)
+    plt.axis([-1,20,-1,20])
+    plt.xlabel('step number')
+    plt.ylabel('walker id')
+    plt.title('Load balancing test, color-coded by process id')
     plt.savefig(plt_name)
 
 if __name__ == '__main__':
