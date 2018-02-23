@@ -24,6 +24,7 @@ def main():
     bounds = [1,2,3,4]
     norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
     plt.scatter(step,walker_id,c=rank,cmap=cmap, s=100, norm=norm)
+    plt.axhline(9.5,color='k')
     plt.axis([-1,20,-1,20])
     plt.xlabel('step number')
     plt.ylabel('walker id')
