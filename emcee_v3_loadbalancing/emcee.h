@@ -9,6 +9,7 @@
 #include <float.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
 
 #define WORKTAG 1
 #define DIETAG 2
