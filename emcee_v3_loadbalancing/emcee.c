@@ -380,7 +380,16 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
     /*========================================================================*/
     /* MPI stuff */
     int nprocs, rank, nworkers;
-    MPI_Init(argc,argv);
+    int user_control, flag;
+    user_control = 0;
+    MPI_Initialized(&flag);
+
+    if (flag){
+        user_control = 1; //the user has already called MPI_Init; will be responsible for calling MPI_Finalize
+    }
+    else{
+        MPI_Init(argc,argv);
+    }
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -422,7 +431,7 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
     }
 
     /* end MPI */
-    MPI_Finalize();
+    if (user_control==0) MPI_Finalize();
 }
 
 /* -------------------------------------------------------------------------- */
