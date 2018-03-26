@@ -245,6 +245,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
     double *z_array;
     int *current_task;
     MPI_Status status;
+    FILE *file;
 
     const int MAXLINESIZE = 10000;
     char buffer[MAXLINESIZE];
