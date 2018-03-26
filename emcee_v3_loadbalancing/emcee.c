@@ -449,7 +449,8 @@ void worker(const void *userdata, double (*lnprob)(const double *, size_t, const
 /* -------------------------------------------------------------------------- */
 void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, double a,
                              double (*lnprob)(const double *, size_t, const void *),
-                             const void *userdata, const char *fname, int nburn)
+                             const void *userdata, const char *fname, int nburn,
+                             int resume)
 {
     /*========================================================================*/
     /* MPI stuff */

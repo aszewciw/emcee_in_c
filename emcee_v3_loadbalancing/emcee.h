@@ -67,7 +67,7 @@ void update_positions(walker_pos *walkers, const struct walker_pos *trial,
     (4) accepting/rejecting trial positions
     (5) writing the ensemble state to a file
  */
-void manager(walker_pos *start_pos, double a, const char *fname, int nburn);
+void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int resume);
 
 /*
   worker (processes 1 - nprocs) is responsible for:
@@ -85,12 +85,12 @@ double rand_gofz(double a);
 /* run chain with loadbalancing enabled */
 void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, double a,
                              double (*lnprob)(const double *, size_t, const void *),
-                             const void *userdata, const char *fname, int nburn);
+                             const void *userdata, const char *fname, int nburn, int resume);
 
 /* the main function to run a chain */
 void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                double (*lnprob)(const double *, size_t, const void *),
-               const void *userdata, const char *fname, int nburn,
+               const void *userdata, const char *fname, int nburn, int resume,
                int load_balancing);
 
 #endif //#ifndef _EMCEE_HEADER_GUARD
