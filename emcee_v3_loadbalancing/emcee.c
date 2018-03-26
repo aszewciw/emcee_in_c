@@ -238,7 +238,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
 
     walker_pos *ensemble_A, *ensemble_B, *trial;
     size_t nsteps, nwalkers, npars, nwalkers_over_two, iwalker, ipar, istep;
-    size_t iline, Nlines;
+    size_t iline, Nlines, startline;
     int nprocs, rank, irecv;
     double lnprob_tmp;
     time_t t;
