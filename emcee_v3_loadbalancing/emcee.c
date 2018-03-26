@@ -1,7 +1,32 @@
 #include "emcee.h"
 
 /* -------------------------------------------------------------------------- */
-walker_pos* allocate_walkers(size_t nwalkers){
+size_t getNlines(const char *fname,const char comment)
+{
+    FILE *fp= NULL;
+    const int MAXLINESIZE = 10000;
+    size_t nlines=0;
+    char str_line[MAXLINESIZE];
+
+    fp = fopen(fname,"rt");
+
+    while(1){
+        if(fgets(str_line, MAXLINESIZE,fp)!=NULL) {
+            //WARNING: this does not remove white-space. You might
+            //want to implement that (was never an issue for me)
+            if(str_line[0] !=comment) nlines++;
+        }
+        else{
+            break;
+        }
+    }
+    fclose(fp);
+    return nlines;
+}
+
+/* -------------------------------------------------------------------------- */
+walker_pos* allocate_walkers(size_t nwalkers)
+{
     struct walker_pos *self=calloc(nwalkers,sizeof(walker_pos));
     if (self==NULL) {
         fprintf(stderr,"Could not allocate struct walker_pos\n");
@@ -11,7 +36,8 @@ walker_pos* allocate_walkers(size_t nwalkers){
 }
 
 /* -------------------------------------------------------------------------- */
-void free_walkers(walker_pos *w){
+void free_walkers(walker_pos *w)
+{
     free(w);
 }
 
@@ -34,11 +60,18 @@ walker_pos *make_guess(double *centers, double *widths, size_t nwalkers, size_t 
     }
     return guess;
 }
+
 /* -------------------------------------------------------------------------- */
 int walker_accept(double lnprob_old, double lnprob_new, size_t npars, double z)
 {
-    double lnprob_diff = (npars - 1.)*log(z) + lnprob_new - lnprob_old;
-    double r = rand_0to1();
+    double lnprob_diff, r;
+
+    if(isnan(lnprob_new)){
+        return 0;
+    }
+
+    lnprob_diff = (npars - 1.)*log(z) + lnprob_new - lnprob_old;
+    r = rand_0to1();
 
     if (lnprob_diff > log(r)) {
         return 1;
@@ -174,6 +207,7 @@ void create_trials(walker_pos *trial, const struct walker_pos *walkers,
         }
     }
 }
+
 /* -------------------------------------------------------------------------- */
 void update_positions(walker_pos *walkers, const struct walker_pos *trial,
                       double *z_array, size_t nwalkers)
@@ -197,17 +231,23 @@ void update_positions(walker_pos *walkers, const struct walker_pos *trial,
         }
     }
 }
+
 /* -------------------------------------------------------------------------- */
-void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
+void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int resume)
+{
 
     walker_pos *ensemble_A, *ensemble_B, *trial;
     size_t nsteps, nwalkers, npars, nwalkers_over_two, iwalker, ipar, istep;
+    size_t iline, Nlines;
     int nprocs, rank, irecv;
     double lnprob_tmp;
     time_t t;
     double *z_array;
     int *current_task;
     MPI_Status status;
+
+    const int MAXLINESIZE = 10000;
+    char buffer[MAXLINESIZE];
 
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     current_task = calloc(nprocs, sizeof(int));
@@ -224,49 +264,81 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
 
     srand((unsigned)(time(&t)));
 
-    /* get initial lnprob values */
-    iwalker=0;
-    for(rank=1; rank<nprocs; rank++){
-        current_task[rank]=iwalker;
-        MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
-        iwalker++;
-    }
-
-    /* receive lnprob's as they come in, and send out remaining walker positions */
-    while(iwalker<nwalkers){
-        MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-        irecv=current_task[status.MPI_SOURCE];
-        start_pos[irecv].lnprob = lnprob_tmp;
-        start_pos[irecv].rank = status.MPI_SOURCE;
-        current_task[status.MPI_SOURCE]=iwalker;
-        MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
-        iwalker++;
-    }
-
-    /* receive remaining lnprobs -- should be one for each worker, but they arrive in unknown order */
-    for (rank = 1; rank < nprocs; rank++) {
-        MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-        irecv=current_task[status.MPI_SOURCE];
-        start_pos[irecv].rank = status.MPI_SOURCE;
-        start_pos[irecv].lnprob = lnprob_tmp;
-    }
-
-    /* fill the two ensembles with starting positions */
-    for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
-        ensemble_A[iwalker].accept=1;
-        ensemble_B[iwalker].accept=1;
-        ensemble_A[iwalker].lnprob=start_pos[iwalker].lnprob;
-        ensemble_B[iwalker].lnprob=start_pos[iwalker+nwalkers_over_two].lnprob;
-        ensemble_A[iwalker].rank=start_pos[iwalker].rank;
-        ensemble_B[iwalker].rank=start_pos[iwalker+nwalkers_over_two].rank;
-        for(ipar=0; ipar<npars; ipar++){
-            ensemble_A[iwalker].pars[ipar]=start_pos[iwalker].pars[ipar];
-            ensemble_B[iwalker].pars[ipar]=start_pos[iwalker+nwalkers_over_two].pars[ipar];
+    if(resume!=1){
+        /* begin chain from passed start_pos */
+        /* get initial lnprob values */
+        iwalker=0;
+        for(rank=1; rank<nprocs; rank++){
+            current_task[rank]=iwalker;
+            MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
+            iwalker++;
         }
-    }
 
-    write_header(fname,nsteps, nwalkers, npars);
-    write_step(fname, ensemble_A, ensemble_B, nwalkers_over_two, 0);
+        /* receive lnprob's as they come in, and send out remaining walker positions */
+        while(iwalker<nwalkers){
+            MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            irecv=current_task[status.MPI_SOURCE];
+            start_pos[irecv].lnprob = lnprob_tmp;
+            start_pos[irecv].rank = status.MPI_SOURCE;
+            current_task[status.MPI_SOURCE]=iwalker;
+            MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
+            iwalker++;
+        }
+
+        /* receive remaining lnprobs -- should be one for each worker, but they arrive in unknown order */
+        for (rank = 1; rank < nprocs; rank++) {
+            MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            irecv=current_task[status.MPI_SOURCE];
+            start_pos[irecv].rank = status.MPI_SOURCE;
+            start_pos[irecv].lnprob = lnprob_tmp;
+        }
+
+        /* fill the two ensembles with starting positions */
+        for(iwalker=0; iwalker<nwalkers_over_two; iwalker++){
+            ensemble_A[iwalker].accept=1;
+            ensemble_B[iwalker].accept=1;
+            ensemble_A[iwalker].lnprob=start_pos[iwalker].lnprob;
+            ensemble_B[iwalker].lnprob=start_pos[iwalker+nwalkers_over_two].lnprob;
+            ensemble_A[iwalker].rank=start_pos[iwalker].rank;
+            ensemble_B[iwalker].rank=start_pos[iwalker+nwalkers_over_two].rank;
+            for(ipar=0; ipar<npars; ipar++){
+                ensemble_A[iwalker].pars[ipar]=start_pos[iwalker].pars[ipar];
+                ensemble_B[iwalker].pars[ipar]=start_pos[iwalker+nwalkers_over_two].pars[ipar];
+            }
+        }
+
+        write_header(fname, nsteps, nwalkers, npars);
+        write_step(fname, ensemble_A, ensemble_B, nwalkers_over_two, 0);
+    }
+    else{
+        /* read the last nwalkers lines of the output file in order to get start_pos */
+        Nlines = getNlines(fname,'%'); // using the wrong comment on purpose to count all lines
+        startline = Nlines - NWALKERS;
+        iline = 0;
+
+        file = fopen(fname,"r");
+        while(iline<Nlines){
+            if(iline<startline){
+                fgets(buffer, MAXLINESIZE,file);
+            }
+            else if(iline<(startline+nwalkers_over_two)){
+                iwalker = iline - startline;
+                fscanf(file,"%*zu %*zu %d %lf", &ensemble_A[iwalker].accept, &ensemble_A[iwalker].lnprob);
+                for(ipar=0; ipar<npars; ipar++){
+                    fscanf(file,"%lf", &ensemble_A[iwalker].pars[ipar]);
+                }
+            }
+            else{
+                iwalker = iline - startline - nwalkers_over_two;
+                fscanf(file,"%*zu %*zu %d %lf", &ensemble_B[iwalker].accept, &ensemble_B[iwalker].lnprob);
+                for(ipar=0; ipar<npars; ipar++){
+                    fscanf(file,"%lf", &ensemble_B[iwalker].pars[ipar]);
+                }
+            }
+            iline++;
+        }
+        fclose(file);
+    }
 
     /* begin the chain */
     for(istep=1; istep<nsteps; istep++){
@@ -352,7 +424,8 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn){
 }
 
 /* -------------------------------------------------------------------------- */
-void worker(const void *userdata, double (*lnprob)(const double *, size_t, const void *)){
+void worker(const void *userdata, double (*lnprob)(const double *, size_t, const void *))
+{
 
     size_t npars;
     MPI_Status status;
@@ -372,6 +445,7 @@ void worker(const void *userdata, double (*lnprob)(const double *, size_t, const
     free(pars);
 
 }
+
 /* -------------------------------------------------------------------------- */
 void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, double a,
                              double (*lnprob)(const double *, size_t, const void *),
@@ -424,7 +498,7 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
     }
 
     if(rank==0){
-        manager(start_pos, a, fname, nburn);
+        manager(start_pos, a, fname, nburn, resume);
     }
     else{
         worker(userdata, lnprob);
@@ -438,10 +512,10 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
 void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                double (*lnprob)(const double *, size_t, const void *),
                const void *userdata, const char *fname, int nburn,
-               int load_balancing)
+               int load_balancing, int resume)
 {
     if(load_balancing){
-        run_chain_loadbalancing(argc,argv,start_pos,a,lnprob,userdata,fname,nburn);
+        run_chain_loadbalancing(argc,argv,start_pos,a,lnprob,userdata,fname,nburn,resume);
     }
     else{
         // run_chain_standard(argc,argv,start_pos,a,lnprob,userdata,fname,nburn);

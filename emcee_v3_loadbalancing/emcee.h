@@ -11,8 +11,8 @@
 #include <string.h>
 #include <time.h>
 
-#define WORKTAG 1
-#define DIETAG 2
+#define WORKTAG (1)
+#define DIETAG (2)
 
 /* position of a single walker */
 typedef struct walker_pos{
@@ -21,6 +21,9 @@ typedef struct walker_pos{
     double lnprob;      /* ln of probability for current pars */
     double pars[NPARS]; /* parameters */
 } walker_pos;
+
+/* get number of lines in a file */
+size_t getNlines(const char *fname,const char comment)
 
 /* allocate space for walkers */
 walker_pos* allocate_walkers(size_t nwalkers);
