@@ -23,7 +23,7 @@ typedef struct walker_pos{
 } walker_pos;
 
 /* get number of lines in a file */
-size_t getNlines(const char *fname,const char comment)
+size_t getNlines(const char *fname,const char comment);
 
 /* allocate space for walkers */
 walker_pos* allocate_walkers(size_t nwalkers);
