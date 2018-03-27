@@ -342,9 +342,8 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
         fclose(file);
 
         offset = Nlines/((size_t)NWALKERS); //Nlines is too big but OK bc int division
-        istep = offset;
+        istart = offset;
         nsteps += offset;
-        fprintf(stderr, "\n\n\n%zu %zu\n\n\n\n", nsteps, offset);
     }
 
     /* begin the chain */
