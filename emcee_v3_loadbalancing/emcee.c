@@ -341,7 +341,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
         }
         fclose(file);
 
-        offset = (Nlines/size_t(NWALKERS));
+        offset = Nlines/((size_t)NWALKERS); //Nlines is too big but OK bc int division
         istep = offset;
         nsteps += offset;
     }
