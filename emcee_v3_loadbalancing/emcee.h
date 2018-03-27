@@ -90,7 +90,7 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
 /* the main function to run a chain */
 void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                double (*lnprob)(const double *, size_t, const void *),
-               const void *userdata, const char *fname, int nburn, int resume,
-               int load_balancing);
+               const void *userdata, const char *fname, int nburn,
+               int load_balancing, int resume);
 
 #endif //#ifndef _EMCEE_HEADER_GUARD
