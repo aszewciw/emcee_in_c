@@ -516,12 +516,26 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
                const void *userdata, const char *fname, int nburn,
                int load_balancing, int resume)
 {
+    // should add a check here to make sure file has more lines than nwalkers
+    size_t nlines;
+
+    if(resume==1){
+        nlines = getNlines(fname, '#');
+        if(nlines<(size_t)NWALKERS){
+            fprintf(stderr, "Cannot resume chain from file %s: has %zu lines, less than nwalkers\n",
+                    fname, nlines);
+            return;
+        }
+    }
+
     if(load_balancing){
         run_chain_loadbalancing(argc,argv,start_pos,a,lnprob,userdata,fname,nburn,resume);
     }
     else{
         // run_chain_standard(argc,argv,start_pos,a,lnprob,userdata,fname,nburn);
         fprintf(stderr, "Error: load_balancing must be enabled currently\n");
-        exit(EXIT_FAILURE);
+        // exit(EXIT_FAILURE);
+        return;
     }
+
 }
