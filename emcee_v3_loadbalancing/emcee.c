@@ -237,8 +237,8 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
 {
 
     walker_pos *ensemble_A, *ensemble_B, *trial;
-    size_t nsteps, nwalkers, npars, nwalkers_over_two, iwalker, ipar, istep;
-    size_t iline, Nlines, startline;
+    size_t nsteps, nwalkers, npars, nwalkers_over_two, iwalker, ipar, istep, istart;
+    size_t iline, Nlines, startline, offset;
     int nprocs, rank, irecv;
     double lnprob_tmp;
     time_t t;
@@ -310,6 +310,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
 
         write_header(fname, nsteps, nwalkers, npars);
         write_step(fname, ensemble_A, ensemble_B, nwalkers_over_two, 0);
+        istart = 1;
     }
     else{
         /* read the last nwalkers lines of the output file in order to get start_pos */
@@ -339,10 +340,14 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
             iline++;
         }
         fclose(file);
+
+        offset = (Nlines/size_t(NWALKERS));
+        istep = offset;
+        nsteps += offset;
     }
 
     /* begin the chain */
-    for(istep=1; istep<nsteps; istep++){
+    for(istep=istart; istep<nsteps; istep++){
         /*----------------------------- ensemble A ---------------------------*/
         create_trials(trial, ensemble_A, ensemble_B, z_array, nwalkers_over_two, a);
 
