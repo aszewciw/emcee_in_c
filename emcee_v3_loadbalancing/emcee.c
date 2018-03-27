@@ -525,6 +525,11 @@ void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
     size_t nlines;
 
     if(resume==1){
+        if(access(fname,R_OK)==-1){
+            fprintf(stderr, "Cannot resume chain from file %s: no read access\n",
+                    fname);
+            return;
+        }
         nlines = getNlines(fname, '#');
         if(nlines<(size_t)NWALKERS){
             fprintf(stderr, "Cannot resume chain from file %s: has %zu lines, less than nwalkers\n",
