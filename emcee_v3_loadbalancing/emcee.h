@@ -2,7 +2,8 @@
 #define _EMCEE_HEADER_GUARD
 
 #include "pars.h"
-#include "mpi.h"
+// #include "mpi.h"
+#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
