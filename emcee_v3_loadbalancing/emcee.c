@@ -453,10 +453,10 @@ void worker(const void *userdata, double (*lnprob)(const double *, size_t, const
 }
 
 /* -------------------------------------------------------------------------- */
-void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, double a,
+void run_chain_loadbalancing(int *argc, char ***argv, int nwalkers, int nsteps,
+                             int nburn, int resume, double a, walker_pos *start_pos,
                              double (*lnprob)(const double *, size_t, const void *),
-                             const void *userdata, const char *fname, int nburn,
-                             int resume)
+                             const void *userdata, const char *fname)
 {
     /*========================================================================*/
     /* MPI stuff */
@@ -475,7 +475,8 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     /* chain things */
-    size_t nwalkers,nwalkers_over_two;
+    int npars, nwalkers_over_two;
+    double *pars;
 
     /*========================================================================*/
     /* check that nwalkers is even */
@@ -515,10 +516,10 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
 }
 
 /* -------------------------------------------------------------------------- */
-void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
+void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int nburn,
+               int load_balancing, int resume, double a, walker_pos *start_pos,
                double (*lnprob)(const double *, size_t, const void *),
-               const void *userdata, const char *fname, int nburn,
-               int load_balancing, int resume)
+               const void *userdata, const char *fname)
 {
     // should add a check here to make sure file has more lines than nwalkers
     size_t nlines;
