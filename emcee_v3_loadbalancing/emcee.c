@@ -81,13 +81,13 @@ int walker_accept(double lnprob_old, double lnprob_new, size_t npars, double z)
 }
 
 /* -------------------------------------------------------------------------- */
-double rand_0to1()
+double rand_0to1(void)
 {
     return (double)rand() / (double)RAND_MAX ;
 }
 
 /* -------------------------------------------------------------------------- */
-double normal_rand()
+double normal_rand(void)
 {
     double x1, x2, w, y1;//, y2;
 
@@ -475,8 +475,7 @@ void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, dou
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     /* chain things */
-    size_t nsteps, nwalkers, npars, nwalkers_over_two;
-    double *pars;
+    size_t nwalkers,nwalkers_over_two;
 
     /*========================================================================*/
     /* check that nwalkers is even */

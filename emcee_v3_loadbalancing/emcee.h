@@ -37,10 +37,10 @@ void free_walkers(walker_pos *w);
 walker_pos* make_guess(double *centers, double *widths, size_t nwalkers, size_t npars);
 
 /* generate random number between 0 and 1 */
-double rand_0to1();
+double rand_0to1(void);
 
 /* generate normal random numbers */
-double normal_rand();
+double normal_rand(void);
 
 /* decide to accept or reject proposed parameters based on new and old probabilities */
 int walker_accept(double lnprob_old, double lnprob_new, size_t npars, double z);
