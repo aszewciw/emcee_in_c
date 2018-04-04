@@ -370,7 +370,7 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
         /*----------------------------- ensemble A ---------------------------*/
         // create_trials(trial, ensemble_A, ensemble_B, z_array, nwalkers_over_two, a);
         create_trials(nwalkers_over_two, npars, a, z_array, trial, ensemble_A, ensemble_B);
-
+        fprintf(stderr, "trials created\n");
         /* send out first batch of trial positions */
         iwalker=0;
         for(rank=1; rank<nprocs; rank++){
