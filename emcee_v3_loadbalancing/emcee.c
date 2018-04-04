@@ -58,7 +58,7 @@ walker_pos *make_guess(int nwalkers, int npars, double *centers, double *widths)
 {
     int ipar, iwalker;
     double center, width, val;
-    walker_pos * guess=allocate_walkers(nwalkers);
+    walker_pos * guess=allocate_walkers(nwalkers,npars);
 
     for (ipar=0; ipar<npars; ipar++) {
 
@@ -471,73 +471,10 @@ void worker(int npars, const void *userdata, double (*lnprob)(const double *, in
 }
 
 /* -------------------------------------------------------------------------- */
-// void run_chain_loadbalancing(int *argc, char ***argv, int nwalkers, int nsteps,
-//                              int nburn, int resume, double a, walker_pos *start_pos,
-//                              double (*lnprob)(const double *, size_t, const void *),
-//                              const void *userdata, const char *fname)
-// {
-//     /*========================================================================*/
-//     /* MPI stuff */
-//     int nprocs, rank, nworkers;
-//     int user_control, flag;
-//     user_control = 0;
-//     MPI_Initialized(&flag);
-
-//     if (flag){
-//         user_control = 1; //the user has already called MPI_Init; will be responsible for calling MPI_Finalize
-//     }
-//     else{
-//         MPI_Init(argc,argv);
-//     }
-//     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-//     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-//     /* chain things */
-//     int npars, nwalkers_over_two;
-//     double *pars;
-
-//     /*========================================================================*/
-//      check that nwalkers is even
-//     nwalkers = (size_t)NWALKERS;
-//     if(nwalkers%2==1){
-//         if(rank==0){
-//             fprintf(stderr, "Use an even number of walkers. They will be split into two ensembles\n");
-//         }
-//         MPI_Barrier(MPI_COMM_WORLD);
-//         MPI_Finalize();
-//         exit(EXIT_FAILURE);
-//     }
-
-//     nwalkers_over_two = nwalkers/2;
-//     nworkers = nprocs-1;
-
-//     if(nworkers>nwalkers_over_two){
-//         if(rank==0){
-//             fprintf(stderr, "Attempting to split a 'half-ensemble' of %zu walkers across %d workers.\n",
-//                     nwalkers_over_two, nworkers);
-//             fprintf(stderr, "I don't know how to do that. Change the values in the 'pars.h' file\n");
-//         }
-//         MPI_Barrier(MPI_COMM_WORLD);
-//         MPI_Finalize();
-//         exit(EXIT_FAILURE);
-//     }
-
-//     if(rank==0){
-//         manager(start_pos, a, fname, nburn, resume);
-//     }
-//     else{
-//         worker(userdata, lnprob);
-//     }
-
-//     /* end MPI */
-//     if (user_control==0) MPI_Finalize();
-// }
-
-/* -------------------------------------------------------------------------- */
 void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
                int nburn, int resume, double a, walker_pos *start_pos,
                double (*lnprob)(const double *, int, const void *),
-               const void *userdata, const char *fname);
+               const void *userdata, const char *fname)
 {
     // first check that the file has more lines than walkers if we are resuming a chain
     size_t nlines;
@@ -602,9 +539,7 @@ void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
     if(rank==0){
         manager(nwalkers, nsteps, npars, nburn, resume, a, start_pos, fname);
     }
-    else{
-        worker(userdata, lnprob);
-    }
+    else worker(userdata, lnprob);
 
     /* end MPI */
     if (user_control==0) MPI_Finalize();
