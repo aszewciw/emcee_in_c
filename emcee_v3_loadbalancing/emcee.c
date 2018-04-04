@@ -485,7 +485,7 @@ void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
             return;
         }
         nlines = getNlines(fname, '#');
-        if(nlines<(size_t)NWALKERS){
+        if(nlines<nwalkers){
             fprintf(stderr, "Cannot resume chain from file %s: has %zu lines, less than nwalkers\n",
                     fname, nlines);
             return;
@@ -539,7 +539,7 @@ void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
     if(rank==0){
         manager(nwalkers, nsteps, npars, nburn, resume, a, start_pos, fname);
     }
-    else worker(userdata, lnprob);
+    else worker(npars, userdata, lnprob);
 
     /* end MPI */
     if (user_control==0) MPI_Finalize();
