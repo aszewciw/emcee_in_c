@@ -363,7 +363,6 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
         istart = offset;
         nsteps += offset;
     }
-    fprintf(stderr, "init successful\n");
 
     /* begin the chain */
     for(istep=istart; istep<nsteps; istep++){
@@ -377,11 +376,11 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
             MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
-        fprintf(stderr, "sent\n");
 
         /* receive lnprob's as they come in, and send out remaining walker positions */
         while(iwalker<nwalkers_over_two){
             MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            fprintf(stderr, "%lf\n", lnprob_tmp);
             irecv = current_task[status.MPI_SOURCE];
             trial[irecv].lnprob = lnprob_tmp;
             ensemble_A[irecv].rank = status.MPI_SOURCE;
@@ -469,6 +468,7 @@ void worker(int npars, const void *userdata, double (*lnprob)(const double *, in
             break;
         }
         lnprob_new = lnprob(pars, npars, userdata);
+        fprintf(stderr, "rank lnprob %lf\n", lnprob_new);
         MPI_Send(&lnprob_new, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
     free(pars);
