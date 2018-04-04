@@ -372,6 +372,9 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
         /* send out first batch of trial positions */
         iwalker=0;
         for(rank=1; rank<nprocs; rank++){
+            for(ipar=0;ipar<npars;ipar++){
+                fprintf(stderr, "%d %lf\n", ipar, trial[iwalker].pars[ipar]);
+            }
             current_task[rank]=iwalker;
             MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
