@@ -279,6 +279,7 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
     ensemble_B = allocate_walkers(nwalkers_over_two, npars);
     trial = allocate_walkers(nwalkers_over_two, npars);
 
+    fprintf(stderr, "Structs set up. Ready to get initial lnprob \n", );
     srand((unsigned)(time(&t)));
 
     if(resume!=1){
