@@ -17,7 +17,7 @@ double lnprob(const double *pars, int npars, const void *userdata)
         diff_i = data->data[idata] - pars[idata];
         for(jdata=0; jdata<npars; jdata++){
             diff_j = data->data[jdata] - pars[jdata];
-            cinv_ij = data->ivar[idata][jdata];
+            cinv_ij = data->ivar[idata*npars+jdata];
             chi2 += diff_i*diff_j*cinv_ij;
         }
     }

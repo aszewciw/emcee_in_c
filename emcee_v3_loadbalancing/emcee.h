@@ -37,7 +37,7 @@ void free_walkers(int nwalkers, walker_pos *w);
 walker_pos *make_guess(int nwalkers, int npars, double *centers, double *widths);
 
 /* decide to accept or reject proposed parameters based on new and old probabilities */
-int walker_accept(int npars, double lnprob_old, double lnprob_new, double z)
+int walker_accept(int npars, double lnprob_old, double lnprob_new, double z);
 
 /* generate random number between 0 and 1 */
 double rand_0to1(void);
@@ -52,11 +52,11 @@ unsigned long rand_walker(unsigned long max);
 double rand_gofz(double a);
 
 /* write header info of chain */
-int write_header(int nsteps, int nwalkers, int npars, const char *fname)
+int write_header(int nsteps, int nwalkers, int npars, const char *fname);
 
 /* write single step in chain */
 int write_step(int npars, int nwalkers, int istep, const struct walker_pos *ensemble_A,
-               const struct walker_pos *ensemble_B, const char *fname)
+               const struct walker_pos *ensemble_B, const char *fname);
 
 /* creates an ensemble of "trial" walker positions */
 void create_trials(int nwalkers, int npars, double a, double *z_array,
