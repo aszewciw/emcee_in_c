@@ -99,7 +99,7 @@ int main( int argc, char ** argv )
 
     const char fname[]="nd_gaussian_chain_cversion.dat";
 
-    fprintf(stderr, "Ready to start chain\n");
+    // fprintf(stderr, "Ready to start chain\n");
     // start_pos = make_guess(guess,ballsize,nwalkers,npars);
     run_chain(&argc, &argv, nwalkers, nsteps, npars, nburn, resume, a, start_pos,
               &lnprob, gaussian_data, fname);

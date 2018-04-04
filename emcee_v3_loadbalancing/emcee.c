@@ -279,7 +279,7 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
     ensemble_B = allocate_walkers(nwalkers_over_two, npars);
     trial = allocate_walkers(nwalkers_over_two, npars);
 
-    fprintf(stderr, "Structs set up. Ready to get initial lnprob \n");
+    // fprintf(stderr, "Structs set up. Ready to get initial lnprob \n");
     srand((unsigned)(time(&t)));
 
     if(resume!=1){
@@ -291,7 +291,7 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
             MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
-        fprintf(stderr, "first sends successful\n");
+        // fprintf(stderr, "first sends successful\n");
 
         /* receive lnprob's as they come in, and send out remaining walker positions */
         while(iwalker<nwalkers){
@@ -471,7 +471,7 @@ void worker(int npars, const void *userdata, double (*lnprob)(const double *, in
             break;
         }
         lnprob_new = lnprob(pars, npars, userdata);
-        fprintf(stderr, "rank lnprob %lf\n", lnprob_new);
+        // fprintf(stderr, "rank lnprob %lf\n", lnprob_new);
         MPI_Send(&lnprob_new, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
     free(pars);
