@@ -479,6 +479,7 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
 
     free(z_array);
     free(current_task);
+    free(pars);
     free_walkers(nwalkers_over_two, ensemble_A);
     free_walkers(nwalkers_over_two, ensemble_B);
     free_walkers(nwalkers_over_two, trial);
