@@ -218,7 +218,6 @@ void create_trials(int nwalkers, int npars, double a, double *z_array,
 
     for(iwalker=0; iwalker<nwalkers; iwalker++){
         icomp = rand_walker(nwalkers);
-        fprintf(stderr, "%d\n", icomp);
         z = rand_gofz(a);
         z_array[iwalker] = z;
 
@@ -371,7 +370,6 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
         /*----------------------------- ensemble A ---------------------------*/
         // create_trials(trial, ensemble_A, ensemble_B, z_array, nwalkers_over_two, a);
         create_trials(nwalkers_over_two, npars, a, z_array, trial, ensemble_A, ensemble_B);
-        fprintf(stderr, "trials created\n");
         /* send out first batch of trial positions */
         iwalker=0;
         for(rank=1; rank<nprocs; rank++){
@@ -379,6 +377,7 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
             MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
+        fprintf(stderr, "sent\n");
 
         /* receive lnprob's as they come in, and send out remaining walker positions */
         while(iwalker<nwalkers_over_two){
