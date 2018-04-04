@@ -424,11 +424,11 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
         iwalker=0;
         for(rank=1; rank<nprocs; rank++){
             current_task[rank] = iwalker;
-            // MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
-            for(ipar=0;ipar<npars;ipar++){
-                pars[ipar] = trial[iwalker].pars[ipar];
-            }
-            MPI_Send(&pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
+            MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
+            // for(ipar=0;ipar<npars;ipar++){
+            //     pars[ipar] = trial[iwalker].pars[ipar];
+            // }
+            // MPI_Send(&pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
 
