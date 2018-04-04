@@ -444,6 +444,7 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
     for (rank = 1; rank < nprocs; rank++) {
         MPI_Send(0, 0, MPI_DOUBLE, rank, DIETAG, MPI_COMM_WORLD);
     }
+    fprintf(stderr, "made to chain end\n");
 
     free(z_array);
     free(current_task);
