@@ -363,6 +363,7 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
         istart = offset;
         nsteps += offset;
     }
+    fprintf(stderr, "init successful\n");
 
     /* begin the chain */
     for(istep=istart; istep<nsteps; istep++){
