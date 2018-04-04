@@ -291,6 +291,7 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
             MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
+        fprintf(stderr, "first sends successful\n");
 
         /* receive lnprob's as they come in, and send out remaining walker positions */
         while(iwalker<nwalkers){
