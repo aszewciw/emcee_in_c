@@ -537,6 +537,7 @@ void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
     }
 
     if(rank==0){
+        fprintf(stderr, "Running chain with %d pars, %d steps, %d walkers\n", npars,nsteps,nwalkers);
         manager(nwalkers, nsteps, npars, nburn, resume, a, start_pos, fname);
     }
     else worker(npars, userdata, lnprob);
