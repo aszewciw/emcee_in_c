@@ -1,7 +1,7 @@
 #include "emcee.h"
 
 /* -------------------------------------------------------------------------- */
-size_t getNlines(const char *fname,const char comment)
+size_t getNlines(const char *fname, const char comment)
 {
     FILE *fp= NULL;
     const int MAXLINESIZE = 10000;
@@ -25,26 +25,38 @@ size_t getNlines(const char *fname,const char comment)
 }
 
 /* -------------------------------------------------------------------------- */
-walker_pos* allocate_walkers(size_t nwalkers)
+walker_pos* allocate_walkers(int nwalkers, int npars)
 {
+    int iwalker;
     struct walker_pos *self=calloc(nwalkers,sizeof(walker_pos));
     if (self==NULL) {
         fprintf(stderr,"Could not allocate struct walker_pos\n");
         exit(EXIT_FAILURE);
     }
+    for(iwalker=0; iwalker<nwalkers; iwalker++){
+        self[iwalker].pars = calloc(npars,sizeof(double));
+        if (self[iwalker].pars==NULL) {
+            fprintf(stderr,"Could not allocate pars within walker_pos\n");
+            exit(EXIT_FAILURE);
+        }
+    }
     return self;
 }
 
 /* -------------------------------------------------------------------------- */
-void free_walkers(walker_pos *w)
+void free_walkers(int nwalkers, walker_pos *w)
 {
+    int iwalker;
+    for(iwalker=0;iwalker<nwalkers;iwalker++){
+        free(w[iwalker].pars);
+    }
     free(w);
 }
 
 /* -------------------------------------------------------------------------- */
-walker_pos *make_guess(double *centers, double *widths, size_t nwalkers, size_t npars)
+walker_pos *make_guess(int nwalkers, int npars, double *centers, double *widths)
 {
-    size_t ipar, iwalker;
+    int ipar, iwalker;
     double center, width, val;
     walker_pos * guess=allocate_walkers(nwalkers);
 
@@ -62,10 +74,11 @@ walker_pos *make_guess(double *centers, double *widths, size_t nwalkers, size_t 
 }
 
 /* -------------------------------------------------------------------------- */
-int walker_accept(double lnprob_old, double lnprob_new, size_t npars, double z)
+int walker_accept(int npars, double lnprob_old, double lnprob_new, double z)
 {
     double lnprob_diff, r;
 
+    /* as I will recommend in documentation, return NAN for values outside priors */
     if(isnan(lnprob_new)){
         return 0;
     }
@@ -75,7 +88,8 @@ int walker_accept(double lnprob_old, double lnprob_new, size_t npars, double z)
 
     if (lnprob_diff > log(r)) {
         return 1;
-    } else {
+    }
+    else{
         return 0;
     }
 }
@@ -83,6 +97,7 @@ int walker_accept(double lnprob_old, double lnprob_new, size_t npars, double z)
 /* -------------------------------------------------------------------------- */
 double rand_0to1(void)
 {
+    // I think this is sufficient...honestly, who actually would use this with RAND_MAX~32000?
     return (double)rand() / (double)RAND_MAX ;
 }
 
@@ -104,11 +119,22 @@ double normal_rand(void)
 }
 
 /* -------------------------------------------------------------------------- */
-size_t rand_walker(size_t n)
+// taken from https://stackoverflow.com/questions/2509679/how-to-generate-a-random-integer-number-from-within-a-range
+unsigned long rand_walker(unsigned long max)
 {
-    /* fix this later for sake of uniformity */
-    size_t i=rand()%n;
-    return i;
+    unsigned long num_bins, num_rand, bin_size, defect;
+    long x;
+
+    num_bins = (unsigned long) max + 1,
+    num_rand = (unsigned long) RAND_MAX + 1,
+    bin_size = num_rand / num_bins,
+    defect   = num_rand % num_bins;
+    do
+    {
+        x = random();
+    }
+    while (num_rand - defect <= (unsigned long)x);
+    return x/bin_size;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -129,14 +155,14 @@ double rand_gofz(double a)
 }
 
 /* -------------------------------------------------------------------------- */
-int write_header(const char *fname, size_t nsteps, size_t nwalkers, size_t npars)
+int write_header(int nsteps, int nwalkers, int npars, const char *fname)
 {
     FILE *file=fopen(fname,"w");
     if (file==NULL) {
         fprintf(stderr,"Error: could not open file '%s'\n", fname);
         return 0;
     }
-    fprintf(file, "# nsteps=%zu nwalkers=%zu npars=%zu\n",nsteps, nwalkers, npars);
+    fprintf(file, "# nsteps=%d nwalkers=%d npars=%d\n",nsteps, nwalkers, npars);
     fprintf(file, "# step proc_id accept lnprob [pars]\n");
 
     fclose(file);
@@ -144,12 +170,10 @@ int write_header(const char *fname, size_t nsteps, size_t nwalkers, size_t npars
 }
 
 /* -------------------------------------------------------------------------- */
-int write_step(const char *fname, const struct walker_pos *ensemble_A,
-               const struct walker_pos *ensemble_B, size_t nwalkers, size_t istep)
+int write_step(int npars, int nwalkers, int istep, const struct walker_pos *ensemble_A,
+               const struct walker_pos *ensemble_B, const char *fname)
 {
-    size_t npars, iwalker, ipar;
-
-    npars=(size_t)NPARS;
+    int iwalker, ipar;
 
     FILE *file=fopen(fname,"a");
     if (file==NULL) {
@@ -158,7 +182,7 @@ int write_step(const char *fname, const struct walker_pos *ensemble_A,
     }
 
     for(iwalker=0; iwalker<nwalkers; iwalker++){
-        fprintf(file,"%zu\t%d\t%d\t%.16g",
+        fprintf(file,"%d\t%d\t%d\t%.16g",
                 istep,
                 ensemble_A[iwalker].rank,
                 ensemble_A[iwalker].accept,
@@ -169,7 +193,7 @@ int write_step(const char *fname, const struct walker_pos *ensemble_A,
         fprintf(file,"\n");
     }
     for(iwalker=0; iwalker<nwalkers; iwalker++){
-        fprintf(file,"%zu\t%d\t%d\t%.16g",
+        fprintf(file,"%d\t%d\t%d\t%.16g",
                 istep,
                 ensemble_B[iwalker].rank,
                 ensemble_B[iwalker].accept,
@@ -185,14 +209,12 @@ int write_step(const char *fname, const struct walker_pos *ensemble_A,
 }
 
 /* -------------------------------------------------------------------------- */
-void create_trials(walker_pos *trial, const struct walker_pos *walkers,
-                   const struct walker_pos *comp_walkers, double *z_array,
-                   size_t nwalkers, double a)
+void create_trials(int nwalkers, int npars, double a, double *z_array,
+                   walker_pos *trial, const struct walker_pos *walkers,
+                   const struct walker_pos *comp_walkers)
 {
-    size_t iwalker, ipar, icomp, npars;
+    int iwalker, ipar, icomp;
     double z, par_old, par_comp, par_new;
-
-    npars = (size_t)NPARS;
 
     for(iwalker=0; iwalker<nwalkers; iwalker++){
         icomp = rand_walker(nwalkers);
@@ -209,13 +231,11 @@ void create_trials(walker_pos *trial, const struct walker_pos *walkers,
 }
 
 /* -------------------------------------------------------------------------- */
-void update_positions(walker_pos *walkers, const struct walker_pos *trial,
-                      double *z_array, size_t nwalkers)
+void update_positions(int nwalkers, int npars, double *z_array, walker_pos *walkers,
+                      const struct walker_pos *trial)
 {
-    size_t iwalker, ipar, npars;
+    int iwalker, ipar, accept;
     double z, lnprob_old, lnprob_new;
-    int accept;
-    npars = (size_t)NPARS;
 
     for(iwalker=0; iwalker<nwalkers; iwalker++){
         z = z_array[iwalker];
@@ -233,35 +253,31 @@ void update_positions(walker_pos *walkers, const struct walker_pos *trial,
 }
 
 /* -------------------------------------------------------------------------- */
-void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int resume)
+void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double a,
+             walker_pos *start_pos, const char *fname)
 {
-
-    walker_pos *ensemble_A, *ensemble_B, *trial;
-    size_t nsteps, nwalkers, npars, nwalkers_over_two, iwalker, ipar, istep, istart;
+    int nwalkers_over_two, iwalker, ipar, istep, istart, nprocs, rank, irecv;
+    const int MAXLINESIZE = 10000;
     size_t iline, Nlines, startline, offset;
-    int nprocs, rank, irecv;
     double lnprob_tmp;
-    time_t t;
-    double *z_array;
     int *current_task;
+    double *z_array;
+    time_t t;
+    char buffer[MAXLINESIZE];
     MPI_Status status;
+    walker_pos *ensemble_A, *ensemble_B, *trial;
     FILE *file;
 
-    const int MAXLINESIZE = 10000;
-    char buffer[MAXLINESIZE];
-
+    /* current_task let's the manager know which proc is responsible for which walker */
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     current_task = calloc(nprocs, sizeof(int));
 
-    nsteps   = (size_t)NSTEPS;
-    nwalkers = (size_t)NWALKERS;
-    npars    = (size_t)NPARS;
     nwalkers_over_two = nwalkers/2;
     z_array = calloc(nwalkers_over_two, sizeof(double));
 
-    ensemble_A = allocate_walkers(nwalkers_over_two);
-    ensemble_B = allocate_walkers(nwalkers_over_two);
-    trial = allocate_walkers(nwalkers_over_two);
+    ensemble_A = allocate_walkers(nwalkers_over_two, npars);
+    ensemble_B = allocate_walkers(nwalkers_over_two, npars);
+    trial = allocate_walkers(nwalkers_over_two, npars);
 
     srand((unsigned)(time(&t)));
 
@@ -281,13 +297,13 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
             irecv=current_task[status.MPI_SOURCE];
             start_pos[irecv].lnprob = lnprob_tmp;
             start_pos[irecv].rank = status.MPI_SOURCE;
-            current_task[status.MPI_SOURCE]=iwalker;
+            current_task[status.MPI_SOURCE] = iwalker;
             MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
 
         /* receive remaining lnprobs -- should be one for each worker, but they arrive in unknown order */
-        for (rank = 1; rank < nprocs; rank++) {
+        for(rank = 1; rank < nprocs; rank++) {
             MPI_Recv(&lnprob_tmp, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
             irecv=current_task[status.MPI_SOURCE];
             start_pos[irecv].rank = status.MPI_SOURCE;
@@ -308,14 +324,14 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
             }
         }
 
-        write_header(fname, nsteps, nwalkers, npars);
-        write_step(fname, ensemble_A, ensemble_B, nwalkers_over_two, 0);
+        write_header(nsteps, nwalkers, npars, fname);
+        write_step(npars, nwalkers_over_two, 0, ensemble_A, ensemble_B, fname);
         istart = 1;
     }
     else{
         /* read the last nwalkers lines of the output file in order to get start_pos */
         Nlines = getNlines(fname,'%'); // using the wrong comment on purpose to count all lines
-        startline = Nlines - NWALKERS;
+        startline = Nlines - nwalkers;
         iline = 0;
 
         file = fopen(fname,"r");
@@ -325,14 +341,14 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
             }
             else if(iline<(startline+nwalkers_over_two)){
                 iwalker = iline - startline;
-                fscanf(file,"%*zu %*zu %d %lf", &ensemble_A[iwalker].accept, &ensemble_A[iwalker].lnprob);
+                fscanf(file,"%*d %*d %d %lf", &ensemble_A[iwalker].accept, &ensemble_A[iwalker].lnprob);
                 for(ipar=0; ipar<npars; ipar++){
                     fscanf(file,"%lf", &ensemble_A[iwalker].pars[ipar]);
                 }
             }
             else{
                 iwalker = iline - startline - nwalkers_over_two;
-                fscanf(file,"%*zu %*zu %d %lf", &ensemble_B[iwalker].accept, &ensemble_B[iwalker].lnprob);
+                fscanf(file,"%*d %*d %d %lf", &ensemble_B[iwalker].accept, &ensemble_B[iwalker].lnprob);
                 for(ipar=0; ipar<npars; ipar++){
                     fscanf(file,"%lf", &ensemble_B[iwalker].pars[ipar]);
                 }
@@ -341,7 +357,7 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
         }
         fclose(file);
 
-        offset = Nlines/((size_t)NWALKERS); //Nlines is too big but OK bc int division
+        offset = Nlines/nwalkers; //Nlines is too big but OK bc int division
         istart = offset;
         nsteps += offset;
     }
@@ -349,7 +365,8 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
     /* begin the chain */
     for(istep=istart; istep<nsteps; istep++){
         /*----------------------------- ensemble A ---------------------------*/
-        create_trials(trial, ensemble_A, ensemble_B, z_array, nwalkers_over_two, a);
+        // create_trials(trial, ensemble_A, ensemble_B, z_array, nwalkers_over_two, a);
+        create_trials(nwalkers_over_two, npars, a, z_array, trial, ensemble_A, ensemble_B);
 
         /* send out first batch of trial positions */
         iwalker=0;
@@ -379,10 +396,13 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
         }
 
         /* update walker positions */
-        update_positions(ensemble_A, trial, z_array, nwalkers_over_two);
+        // update_positions(ensemble_A, trial, z_array, nwalkers_over_two);
+        update_positions(nwalkers_over_two, npars, z_array, ensemble_A, trial);
 
         /*----------------------------- ensemble B ---------------------------*/
-        create_trials(trial, ensemble_B, ensemble_A, z_array, nwalkers_over_two, a);
+        // create_trials(trial, ensemble_B, ensemble_A, z_array, nwalkers_over_two, a);
+        create_trials(nwalkers_over_two, npars, a, z_array, trial, ensemble_B, ensemble_A);
+
 
         /* send out first batch of trial positions */
         iwalker=0;
@@ -412,9 +432,11 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
         }
 
         /* update walker positions */
-        update_positions(ensemble_B, trial, z_array, nwalkers_over_two);
+        // update_positions(ensemble_B, trial, z_array, nwalkers_over_two);
+        update_positions(nwalkers_over_two, npars, z_array, ensemble_B, trial);
 
-        write_step(fname, ensemble_A, ensemble_B, nwalkers_over_two, istep);
+        // write_step(fname, ensemble_A, ensemble_B, nwalkers_over_two, istep);
+        write_step(npars, nwalkers_over_two, istep, ensemble_A, ensemble_B, fname);
     }
 
     /* chain complete -- tell workers to exit */
@@ -424,21 +446,18 @@ void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int 
 
     free(z_array);
     free(current_task);
-    free_walkers(ensemble_A);
-    free_walkers(ensemble_B);
-    free_walkers(trial);
+    free_walkers(nwalkers_over_two, ensemble_A);
+    free_walkers(nwalkers_over_two, ensemble_B);
+    free_walkers(nwalkers_over_two, trial);
 }
 
 /* -------------------------------------------------------------------------- */
-void worker(const void *userdata, double (*lnprob)(const double *, size_t, const void *))
+void worker(int npars, const void *userdata, double (*lnprob)(const double *, int, const void *))
 {
-
-    size_t npars;
-    MPI_Status status;
-    double *pars;
     double lnprob_new;
+    double *pars;
+    MPI_Status status;
 
-    npars=(size_t)NPARS;
     pars=calloc(npars, sizeof(double));
     while(1){
         MPI_Recv(&pars[0], npars, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
@@ -449,15 +468,93 @@ void worker(const void *userdata, double (*lnprob)(const double *, size_t, const
         MPI_Send(&lnprob_new, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
     free(pars);
-
 }
 
 /* -------------------------------------------------------------------------- */
-void run_chain_loadbalancing(int *argc, char ***argv, int nwalkers, int nsteps,
-                             int nburn, int resume, double a, walker_pos *start_pos,
-                             double (*lnprob)(const double *, size_t, const void *),
-                             const void *userdata, const char *fname)
+// void run_chain_loadbalancing(int *argc, char ***argv, int nwalkers, int nsteps,
+//                              int nburn, int resume, double a, walker_pos *start_pos,
+//                              double (*lnprob)(const double *, size_t, const void *),
+//                              const void *userdata, const char *fname)
+// {
+//     /*========================================================================*/
+//     /* MPI stuff */
+//     int nprocs, rank, nworkers;
+//     int user_control, flag;
+//     user_control = 0;
+//     MPI_Initialized(&flag);
+
+//     if (flag){
+//         user_control = 1; //the user has already called MPI_Init; will be responsible for calling MPI_Finalize
+//     }
+//     else{
+//         MPI_Init(argc,argv);
+//     }
+//     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+//     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+//     /* chain things */
+//     int npars, nwalkers_over_two;
+//     double *pars;
+
+//     /*========================================================================*/
+//      check that nwalkers is even
+//     nwalkers = (size_t)NWALKERS;
+//     if(nwalkers%2==1){
+//         if(rank==0){
+//             fprintf(stderr, "Use an even number of walkers. They will be split into two ensembles\n");
+//         }
+//         MPI_Barrier(MPI_COMM_WORLD);
+//         MPI_Finalize();
+//         exit(EXIT_FAILURE);
+//     }
+
+//     nwalkers_over_two = nwalkers/2;
+//     nworkers = nprocs-1;
+
+//     if(nworkers>nwalkers_over_two){
+//         if(rank==0){
+//             fprintf(stderr, "Attempting to split a 'half-ensemble' of %zu walkers across %d workers.\n",
+//                     nwalkers_over_two, nworkers);
+//             fprintf(stderr, "I don't know how to do that. Change the values in the 'pars.h' file\n");
+//         }
+//         MPI_Barrier(MPI_COMM_WORLD);
+//         MPI_Finalize();
+//         exit(EXIT_FAILURE);
+//     }
+
+//     if(rank==0){
+//         manager(start_pos, a, fname, nburn, resume);
+//     }
+//     else{
+//         worker(userdata, lnprob);
+//     }
+
+//     /* end MPI */
+//     if (user_control==0) MPI_Finalize();
+// }
+
+/* -------------------------------------------------------------------------- */
+void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
+               int nburn, int resume, double a, walker_pos *start_pos,
+               double (*lnprob)(const double *, int, const void *),
+               const void *userdata, const char *fname);
 {
+    // first check that the file has more lines than walkers if we are resuming a chain
+    size_t nlines;
+    if(resume==1){
+        if(access(fname,R_OK)==-1){
+            fprintf(stderr, "Cannot resume chain from file %s: no read access\n",
+                    fname);
+            return;
+        }
+        nlines = getNlines(fname, '#');
+        if(nlines<(size_t)NWALKERS){
+            fprintf(stderr, "Cannot resume chain from file %s: has %zu lines, less than nwalkers\n",
+                    fname, nlines);
+            return;
+        }
+    }
+
     /*========================================================================*/
     /* MPI stuff */
     int nprocs, rank, nworkers;
@@ -475,12 +572,10 @@ void run_chain_loadbalancing(int *argc, char ***argv, int nwalkers, int nsteps,
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     /* chain things */
-    int npars, nwalkers_over_two;
-    double *pars;
+    int nwalkers_over_two;
 
     /*========================================================================*/
     /* check that nwalkers is even */
-    nwalkers = (size_t)NWALKERS;
     if(nwalkers%2==1){
         if(rank==0){
             fprintf(stderr, "Use an even number of walkers. They will be split into two ensembles\n");
@@ -495,9 +590,9 @@ void run_chain_loadbalancing(int *argc, char ***argv, int nwalkers, int nsteps,
 
     if(nworkers>nwalkers_over_two){
         if(rank==0){
-            fprintf(stderr, "Attempting to split a 'half-ensemble' of %zu walkers across %d workers.\n",
+            fprintf(stderr, "Attempting to split a 'half-ensemble' of %d walkers across %d workers.\n",
                     nwalkers_over_two, nworkers);
-            fprintf(stderr, "I don't know how to do that. Change the values in the 'pars.h' file\n");
+            fprintf(stderr, "Change the number of workers and walkers\n");
         }
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Finalize();
@@ -505,7 +600,7 @@ void run_chain_loadbalancing(int *argc, char ***argv, int nwalkers, int nsteps,
     }
 
     if(rank==0){
-        manager(start_pos, a, fname, nburn, resume);
+        manager(nwalkers, nsteps, npars, nburn, resume, a, start_pos, fname);
     }
     else{
         worker(userdata, lnprob);
@@ -513,39 +608,4 @@ void run_chain_loadbalancing(int *argc, char ***argv, int nwalkers, int nsteps,
 
     /* end MPI */
     if (user_control==0) MPI_Finalize();
-}
-
-/* -------------------------------------------------------------------------- */
-void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int nburn,
-               int load_balancing, int resume, double a, walker_pos *start_pos,
-               double (*lnprob)(const double *, size_t, const void *),
-               const void *userdata, const char *fname)
-{
-    // should add a check here to make sure file has more lines than nwalkers
-    size_t nlines;
-
-    if(resume==1){
-        if(access(fname,R_OK)==-1){
-            fprintf(stderr, "Cannot resume chain from file %s: no read access\n",
-                    fname);
-            return;
-        }
-        nlines = getNlines(fname, '#');
-        if(nlines<(size_t)NWALKERS){
-            fprintf(stderr, "Cannot resume chain from file %s: has %zu lines, less than nwalkers\n",
-                    fname, nlines);
-            return;
-        }
-    }
-
-    if(load_balancing){
-        run_chain_loadbalancing(argc,argv,start_pos,a,lnprob,userdata,fname,nburn,resume);
-    }
-    else{
-        // run_chain_standard(argc,argv,start_pos,a,lnprob,userdata,fname,nburn);
-        fprintf(stderr, "Error: load_balancing must be enabled currently\n");
-        // exit(EXIT_FAILURE);
-        return;
-    }
-
 }

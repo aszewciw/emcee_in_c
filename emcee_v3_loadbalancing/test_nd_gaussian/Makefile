@@ -1,8 +1,8 @@
 
 UTILS_DIR=..
-PARS_DIR=.
+# PARS_DIR=.
 CC=mpicc
-CFLAGS=-cc=icc -I$(UTILS_DIR) -I$(PARS_DIR) -Wall
+CFLAGS=-cc=icc -I$(UTILS_DIR) -Wall
 CLINK= -limf
 
 TARGET = run_mcmc

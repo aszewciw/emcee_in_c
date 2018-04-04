@@ -1,8 +1,7 @@
 #ifndef _EMCEE_HEADER_GUARD
 #define _EMCEE_HEADER_GUARD
 
-#include "pars.h"
-// #include "mpi.h"
+// #include "pars.h"
 #include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,20 +20,24 @@ typedef struct walker_pos{
     int rank;           /* process rank that handled the computation */
     int accept;         /* were the current pars part of an accepted step or not (1 or 0) */
     double lnprob;      /* ln of probability for current pars */
-    double pars[NPARS]; /* parameters */
+    // double pars[NPARS]; /* parameters */
+    double *pars; /* parameters */
 } walker_pos;
 
 /* get number of lines in a file */
 size_t getNlines(const char *fname,const char comment);
 
 /* allocate space for walkers */
-walker_pos* allocate_walkers(size_t nwalkers);
+walker_pos* allocate_walkers(int nwalkers, int npars);
 
 /* free space for walkers */
-void free_walkers(walker_pos *w);
+void free_walkers(int nwalkers, walker_pos *w);
 
 /* creates a "ball" of initial guesses (walker positions) */
-walker_pos* make_guess(double *centers, double *widths, size_t nwalkers, size_t npars);
+walker_pos *make_guess(int nwalkers, int npars, double *centers, double *widths);
+
+/* decide to accept or reject proposed parameters based on new and old probabilities */
+int walker_accept(int npars, double lnprob_old, double lnprob_new, double z)
 
 /* generate random number between 0 and 1 */
 double rand_0to1(void);
@@ -42,24 +45,27 @@ double rand_0to1(void);
 /* generate normal random numbers */
 double normal_rand(void);
 
-/* decide to accept or reject proposed parameters based on new and old probabilities */
-int walker_accept(double lnprob_old, double lnprob_new, size_t npars, double z);
+/* choose a random integer between 0 and max */
+unsigned long rand_walker(unsigned long max);
 
-/* write single step in chain */
-int write_step(const char *fname, const struct walker_pos *ensemble_A,
-               const struct walker_pos *ensemble_B, size_t nwalkers, size_t istep);
+/* get a random z for walker step from distribution g(z) */
+double rand_gofz(double a);
 
 /* write header info of chain */
-int write_header(const char *fname, size_t nsteps, size_t nwalkers, size_t npars);
+int write_header(int nsteps, int nwalkers, int npars, const char *fname)
+
+/* write single step in chain */
+int write_step(int npars, int nwalkers, int istep, const struct walker_pos *ensemble_A,
+               const struct walker_pos *ensemble_B, const char *fname)
 
 /* creates an ensemble of "trial" walker positions */
-void create_trials(walker_pos *trial, const struct walker_pos *walkers,
-                   const struct walker_pos *comp_walkers, double *z_array,
-                   size_t nwalkers, double a);
+void create_trials(int nwalkers, int npars, double a, double *z_array,
+                   walker_pos *trial, const struct walker_pos *walkers,
+                   const struct walker_pos *comp_walkers);
 
 /* accept or reject trial positions */
-void update_positions(walker_pos *walkers, const struct walker_pos *trial,
-                      double *z_array, size_t nwalkers);
+void update_positions(int nwalkers, int npars, double *z_array, walker_pos *walkers,
+                      const struct walker_pos *trial);
 
 /*
   manager (process 0) is responsible for:
@@ -69,30 +75,20 @@ void update_positions(walker_pos *walkers, const struct walker_pos *trial,
     (4) accepting/rejecting trial positions
     (5) writing the ensemble state to a file
  */
-void manager(walker_pos *start_pos, double a, const char *fname, int nburn, int resume);
+void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double a,
+             walker_pos *start_pos, const char *fname);
 
 /*
   worker (processes 1 - nprocs) is responsible for:
     (1) accepting parameters from manager
     (2) computing lnprob for walker positions
  */
-void worker(const void *userdata, double (*lnprob)(const double *, size_t, const void *));
-
-/* choose a random integer between 0 and n */
-size_t rand_walker(size_t n);
-
-/* get a random z for walker step from distribution g(z) */
-double rand_gofz(double a);
+void worker(int npars, const void *userdata, double (*lnprob)(const double *, int, const void *));
 
 /* run chain with loadbalancing enabled */
-void run_chain_loadbalancing(int *argc, char ***argv, walker_pos *start_pos, double a,
-                             double (*lnprob)(const double *, size_t, const void *),
-                             const void *userdata, const char *fname, int nburn, int resume);
-
-/* the main function to run a chain */
-void run_chain(int *argc, char ***argv, walker_pos *start_pos, double a,
-               double (*lnprob)(const double *, size_t, const void *),
-               const void *userdata, const char *fname, int nburn,
-               int load_balancing, int resume);
+void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
+               int nburn, int resume, double a, walker_pos *start_pos,
+               double (*lnprob)(const double *, int, const void *),
+               const void *userdata, const char *fname);
 
 #endif //#ifndef _EMCEE_HEADER_GUARD
