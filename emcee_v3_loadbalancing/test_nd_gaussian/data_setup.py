@@ -7,7 +7,7 @@ import numpy as np
 data_fname = 'means.dat'
 icov_fname = 'icov.dat'
 guesses_fname = 'guesses.dat'
-ndim = 5
+ndim = 3
 
 # ensure reproducibility for tests against python emcee
 rseed = 10
@@ -22,7 +22,7 @@ cov = np.dot(cov,cov)
 
 icov = np.linalg.inv(cov)
 
-nwalkers = 250
+nwalkers = 10
 guesses = np.random.rand(ndim * nwalkers).reshape((nwalkers, ndim))
 
 np.savetxt(data_fname,means,fmt='%.12e')

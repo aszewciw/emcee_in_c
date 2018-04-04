@@ -41,9 +41,9 @@ int main( int argc, char ** argv )
     nburn = 0;
     resume = 0;
 
-    npars = 5;
-    nwalkers = 250;
-    nsteps = 4000;
+    npars = 3;
+    nwalkers = 10;
+    nsteps = 3;
 
     gaussian_data = calloc(1,sizeof(mydata));
     if (gaussian_data==NULL) {
