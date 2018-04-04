@@ -218,6 +218,7 @@ void create_trials(int nwalkers, int npars, double a, double *z_array,
 
     for(iwalker=0; iwalker<nwalkers; iwalker++){
         icomp = rand_walker(nwalkers);
+        fprintf(stderr, "%d\n", icomp);
         z = rand_gofz(a);
         z_array[iwalker] = z;
 
