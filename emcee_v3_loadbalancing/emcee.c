@@ -134,7 +134,7 @@ unsigned long rand_walker(unsigned long max)
         x = rand();
     }
     while (num_rand - defect <= (unsigned long)x);
-    // if((x/bin_size)>max) fprintf(stderr, "%\n", );
+    if((x/bin_size)>max) fprintf(stderr, "%lu\n", (x/bin_size));
     return x/bin_size;
     // return RAND_MAX % max;
 }
