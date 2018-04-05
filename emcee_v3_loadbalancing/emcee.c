@@ -134,7 +134,6 @@ unsigned long rand_walker(unsigned long max)
         x = rand();
     }
     while (num_rand - defect <= (unsigned long)x);
-    // if((x/bin_size)>max) fprintf(stderr, "%lu\n", (x/bin_size));
     return x/bin_size;
 }
 
@@ -275,7 +274,6 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
 
     nwalkers_over_two = nwalkers/2;
     z_array = calloc(nwalkers_over_two, sizeof(double));
-    // pars = calloc(npars, sizeof(double));
 
     ensemble_A = allocate_walkers(nwalkers_over_two, npars);
     ensemble_B = allocate_walkers(nwalkers_over_two, npars);
@@ -290,13 +288,8 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
         for(rank=1; rank<nprocs; rank++){
             current_task[rank]=iwalker;
             MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
-            // for(ipar=0;ipar<npars;ipar++){
-            //     pars[ipar] = start_pos[iwalker].pars[ipar];
-            // }
-            // MPI_Send(&pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
-        // fprintf(stderr, "first sends successful\n");
 
         /* receive lnprob's as they come in, and send out remaining walker positions */
         while(iwalker<nwalkers){
@@ -306,10 +299,6 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
             start_pos[irecv].rank = status.MPI_SOURCE;
             current_task[status.MPI_SOURCE] = iwalker;
             MPI_Send(&start_pos[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
-            // for(ipar=0;ipar<npars;ipar++){
-            //     pars[ipar] = start_pos[iwalker].pars[ipar];
-            // }
-            // MPI_Send(&pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
 
@@ -382,10 +371,6 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
         for(rank=1; rank<nprocs; rank++){
             current_task[rank]=iwalker;
             MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
-            // for(ipar=0;ipar<npars;ipar++){
-            //     pars[ipar] = trial[iwalker].pars[ipar];
-            // }
-            // MPI_Send(&pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
 
@@ -397,10 +382,6 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
             ensemble_A[irecv].rank = status.MPI_SOURCE;
             current_task[status.MPI_SOURCE] = iwalker;
             MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
-            // for(ipar=0;ipar<npars;ipar++){
-            //     pars[ipar] = trial[iwalker].pars[ipar];
-            // }
-            // MPI_Send(&pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
 
@@ -418,16 +399,11 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
         /*----------------------------- ensemble B ---------------------------*/
         create_trials(nwalkers_over_two, npars, a, z_array, trial, ensemble_B, ensemble_A);
 
-
         /* send out first batch of trial positions */
         iwalker=0;
         for(rank=1; rank<nprocs; rank++){
             current_task[rank] = iwalker;
             MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
-            // for(ipar=0;ipar<npars;ipar++){
-            //     pars[ipar] = trial[iwalker].pars[ipar];
-            // }
-            // MPI_Send(&pars[0], npars, MPI_DOUBLE, rank, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
 
@@ -439,10 +415,6 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
             ensemble_B[irecv].rank = status.MPI_SOURCE;
             current_task[status.MPI_SOURCE] = iwalker;
             MPI_Send(&trial[iwalker].pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
-            // for(ipar=0;ipar<npars;ipar++){
-            //     pars[ipar] = trial[iwalker].pars[ipar];
-            // }
-            // MPI_Send(&pars[0], npars, MPI_DOUBLE, status.MPI_SOURCE, WORKTAG, MPI_COMM_WORLD);
             iwalker++;
         }
 
@@ -456,7 +428,6 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
 
         /* update walker positions */
         update_positions(nwalkers_over_two, npars, z_array, ensemble_B, trial);
-
         write_step(npars, nwalkers_over_two, istep, ensemble_A, ensemble_B, fname);
     }
 
@@ -466,7 +437,6 @@ void manager(int nwalkers, int nsteps, int npars, int nburn, int resume, double 
     }
     free(z_array);
     free(current_task);
-    // free(pars);
     free_walkers(nwalkers_over_two, ensemble_A);
     free_walkers(nwalkers_over_two, ensemble_B);
     free_walkers(nwalkers_over_two, trial);
