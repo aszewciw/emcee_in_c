@@ -122,21 +122,20 @@ double normal_rand(void)
 // taken from https://stackoverflow.com/questions/2509679/how-to-generate-a-random-integer-number-from-within-a-range
 unsigned long rand_walker(unsigned long max)
 {
-    // unsigned long num_bins, num_rand, bin_size, defect;
-    // long x;
+    unsigned long num_bins, num_rand, bin_size, defect;
+    long x;
 
-    // num_bins = (unsigned long) max;
-    // num_rand = (unsigned long) RAND_MAX + 1,
-    // bin_size = num_rand / num_bins,
-    // defect   = num_rand % num_bins;
-    // do
-    // {
-    //     x = rand();
-    // }
-    // while (num_rand - defect <= (unsigned long)x);
-    // // if((x/bin_size)>max) fprintf(stderr, "%lu\n", (x/bin_size));
-    // return x/bin_size;
-    return RAND_MAX % max;
+    num_bins = (unsigned long) max;
+    num_rand = (unsigned long) RAND_MAX + 1,
+    bin_size = num_rand / num_bins,
+    defect   = num_rand % num_bins;
+    do
+    {
+        x = rand();
+    }
+    while (num_rand - defect <= (unsigned long)x);
+    // if((x/bin_size)>max) fprintf(stderr, "%lu\n", (x/bin_size));
+    return x/bin_size;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -243,7 +242,7 @@ void update_positions(int nwalkers, int npars, double *z_array, walker_pos *walk
         z = z_array[iwalker];
         lnprob_old = walkers[iwalker].lnprob;
         lnprob_new = trial[iwalker].lnprob;
-        accept = walker_accept(lnprob_old, lnprob_new, npars, z);
+        accept = walker_accept(npars, lnprob_old, lnprob_new, z);
         walkers[iwalker].accept = accept;
         if(accept){
             walkers[iwalker].lnprob = lnprob_new;
