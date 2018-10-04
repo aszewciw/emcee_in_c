@@ -171,7 +171,7 @@ double rand_gofz(double a)
 /* -------------------------------------------------------------------------- */
 int write_header(int nsteps, int nwalkers, int npars, int nextra, const char *fname)
 {
-    if 0{
+    if(0){
         fprintf(stderr, "This is to suppress a warning....%d\n", nextra);
     }
     FILE *file=fopen(fname,"w");
