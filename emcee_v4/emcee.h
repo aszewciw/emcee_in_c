@@ -102,6 +102,6 @@ void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
                int nextra, int nburn, int resume, double a, walker_pos *start_pos,
                double (*lnprob)(const double *, int, const void *, int, double*),
                const void *userdata, const char *fname);
-#endif
+#endif //#ifdef WRITE_EXTRA_DOUBLES
 
 #endif //#ifndef _EMCEE_HEADER_GUARD
