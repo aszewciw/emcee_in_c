@@ -35,7 +35,7 @@ walker_pos* allocate_walkers(int nwalkers, int npars, int nextra);
 void free_walkers(int nwalkers, walker_pos *w);
 
 /* creates a "ball" of initial guesses (walker positions) */
-walker_pos *make_guess(int nwalkers, int npars, double *centers, double *widths);
+walker_pos *make_guess(int nwalkers, int npars, int nextra, double *centers, double *widths);
 
 /* decide to accept or reject proposed parameters based on new and old probabilities */
 int walker_accept(int npars, double lnprob_old, double lnprob_new, double z);
@@ -94,7 +94,7 @@ void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
                double (*lnprob)(const double *, int, const void *),
                const void *userdata, const char *fname);
 #else
-void worker(int npars, const void *userdata,
+void worker(int npars, int nextra, const void *userdata,
             double (*lnprob)(const double *, int, const void *, int, double*));
 
 /* run chain with loadbalancing enabled */

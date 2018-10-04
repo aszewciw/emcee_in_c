@@ -65,11 +65,14 @@ void free_walkers(int nwalkers, walker_pos *w)
 }
 
 /* -------------------------------------------------------------------------- */
-walker_pos *make_guess(int nwalkers, int npars, double *centers, double *widths)
+walker_pos *make_guess(int nwalkers, int npars, int nextra, double *centers,
+    double *widths)
 {
     int ipar, iwalker;
     double center, width, val;
-    walker_pos * guess=allocate_walkers(nwalkers,npars);
+    ipar=nextra;
+
+    walker_pos * guess=allocate_walkers(nwalkers,npars,nextra);
 
     for (ipar=0; ipar<npars; ipar++) {
 
@@ -168,7 +171,8 @@ double rand_gofz(double a)
 /* -------------------------------------------------------------------------- */
 int write_header(int nsteps, int nwalkers, int npars, int nextra, const char *fname)
 {
-    int i=nextra; //Just doing this to suppress warning about nextra being unused when ndef WRITE_EXTRA_DOUBLES
+    int i;
+    i=nextra; //Just doing this to suppress warning about nextra being unused when ndef WRITE_EXTRA_DOUBLES
     FILE *file=fopen(fname,"w");
     if (file==NULL) {
         fprintf(stderr,"Error: could not open file '%s'\n", fname);
@@ -757,7 +761,7 @@ void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
     if(rank==0){
         manager(nwalkers, nsteps, npars, nextra, nburn, resume, a, start_pos, fname);
     }
-    else worker(npars, userdata, lnprob);
+    else worker(npars, nextra, userdata, lnprob);
 
     /* end MPI */
     if (user_control==0) MPI_Finalize();
