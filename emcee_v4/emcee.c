@@ -171,8 +171,9 @@ double rand_gofz(double a)
 /* -------------------------------------------------------------------------- */
 int write_header(int nsteps, int nwalkers, int npars, int nextra, const char *fname)
 {
-    int i;
-    i=nextra; //Just doing this to suppress warning about nextra being unused when ndef WRITE_EXTRA_DOUBLES
+    if 0{
+        fprintf(stderr, "This is to suppress a warning....%d\n", nextra);
+    }
     FILE *file=fopen(fname,"w");
     if (file==NULL) {
         fprintf(stderr,"Error: could not open file '%s'\n", fname);
