@@ -179,7 +179,7 @@ int write_header(int nsteps, int nwalkers, int npars, int nextra, const char *fn
         fprintf(stderr,"Error: could not open file '%s'\n", fname);
         return 0;
     }
-#ifdef WRITE_EXTRA_DOUBLES
+#ifndef WRITE_EXTRA_DOUBLES
     fprintf(file, "# nsteps=%d nwalkers=%d npars=%d\n",nsteps, nwalkers, npars);
     fprintf(file, "# step proc_id accept lnprob [pars]\n");
 #else
