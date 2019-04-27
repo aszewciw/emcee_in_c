@@ -633,7 +633,7 @@ void run_chain(int nwalkers, int nsteps, int npars, int nextra, int resume, doub
         }
         nlines = getNlines(fname, '#');
         if(nlines<nwalkers){
-            fprintf(stderr, "Cannot resume chain from file %s: has %zu lines, less than nwalkers\n",
+            fprintf(stderr, "Cannot resume chain from file %s: has %d lines, less than nwalkers\n",
                     fname, nlines);
             return;
         }
@@ -686,7 +686,7 @@ void run_chain(int nwalkers, int nsteps, int npars, int nextra, int resume, doub
         exit(EXIT_FAILURE);
     }
 
-#ifdef WRITE_EXTRA_DOUBLES
+#ifndef WRITE_EXTRA_DOUBLES
     if(rank==0){
         manager(nwalkers, nsteps, npars, 0, resume, a, start_pos, fname);
     }
