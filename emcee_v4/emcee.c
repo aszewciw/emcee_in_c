@@ -738,7 +738,8 @@ void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
     /* check that nwalkers is even */
     if(nwalkers%2==1){
         if(rank==0){
-            fprintf(stderr, "Use an even number of walkers. They will be split into two ensembles\n");
+            fprintf(stderr, "Nwalkers= %d. Use an even number of walkers. They will be split into two ensembles\n",
+                    nwalkers);
         }
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Finalize();
