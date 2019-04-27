@@ -293,7 +293,7 @@ void update_positions(int nwalkers, int npars, int nextra, double *z_array,
 }
 
 /* -------------------------------------------------------------------------- */
-void manager(int nwalkers, int nsteps, int npars, int nextra, int nburn, int resume,
+void manager(int nwalkers, int nsteps, int npars, int nextra, int resume,
              double a, walker_pos *start_pos, const char *fname)
 {
     int nwalkers_over_two, iwalker, ipar, istep, istart, nprocs, rank, irecv;
@@ -614,13 +614,17 @@ void worker(int npars, int nextra, const void *userdata,
 
 /* -------------------------------------------------------------------------- */
 #ifndef WRITE_EXTRA_DOUBLES
-void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
-               int nburn, int resume, double a, walker_pos *start_pos,
-               double (*lnprob)(const double *, int, const void *),
+void run_chain(int nwalkers, int nsteps, int npars, int resume, double a,
+               walker_pos *start_pos, double (*lnprob)(const double *, int, const void *),
                const void *userdata, const char *fname)
+#else
+void run_chain(int nwalkers, int nsteps, int npars, int nextra, int resume, double a,
+               walker_pos *start_pos, double (*lnprob)(const double *, int, const void *, int, double *),
+               const void *userdata, const char *fname)
+#endif
 {
     // first check that the file has more lines than walkers if we are resuming a chain
-    size_t nlines;
+    int nlines;
     if(resume==1){
         if(access(fname,R_OK)==-1){
             fprintf(stderr, "Cannot resume chain from file %s: no read access\n",
@@ -634,25 +638,28 @@ void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
             return;
         }
     }
+#ifdef WRITE_EXTRA_DOUBLES
+    if(nextra<1){
+        fprintf(stderr, "WRITE_EXTRA_DOUBLES enabled but nextra=%d. Must be > 0\n", nextra);
+        fprintf(stderr, "Disable WRITE_EXTRA_DOUBLES in Makefile if you have no extra doubles to write\n");
+        exit(EXIT_FAILURE);
+    }
+#endif
 
     /*========================================================================*/
     /* MPI stuff */
-    int nprocs, rank, nworkers;
-    int user_control, flag;
-    user_control = 0;
-    MPI_Initialized(&flag);
-
-    if (flag){
-        user_control = 1; //the user has already called MPI_Init; will be responsible for calling MPI_Finalize
-    }
-    else{
-        MPI_Init(argc,argv);
-    }
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+    int nprocs, rank, nworkers, flag;
     /* chain things */
     int nwalkers_over_two;
+
+    MPI_Initialized(&flag);
+
+    if (flag==0){
+        fprintf(stderr, "MPI not initialized! Must initialize prior to calling run_chain\n");
+    }
+
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     /*========================================================================*/
     /* check that nwalkers is even */
@@ -679,93 +686,15 @@ void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
         exit(EXIT_FAILURE);
     }
 
+#ifdef WRITE_EXTRA_DOUBLES
     if(rank==0){
-        manager(nwalkers, nsteps, npars, 0, nburn, resume, a, start_pos, fname);
+        manager(nwalkers, nsteps, npars, 0, resume, a, start_pos, fname);
     }
     else worker(npars, userdata, lnprob);
-
-    /* end MPI */
-    if (user_control==0) MPI_Finalize();
-}
-
 #else
-void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
-               int nextra, int nburn, int resume, double a, walker_pos *start_pos,
-               double (*lnprob)(const double *, int, const void *, int, double *),
-               const void *userdata, const char *fname)
-{
-    // first check that the file has more lines than walkers if we are resuming a chain
-    size_t nlines;
-    if(resume==1){
-        if(access(fname,R_OK)==-1){
-            fprintf(stderr, "Cannot resume chain from file %s: no read access\n",
-                    fname);
-            return;
-        }
-        nlines = getNlines(fname, '#');
-        if(nlines<nwalkers){
-            fprintf(stderr, "Cannot resume chain from file %s: has %zu lines, less than nwalkers\n",
-                    fname, nlines);
-            return;
-        }
-    }
-    if(nextra<1){
-        fprintf(stderr, "WRITE_EXTRA_DOUBLES enabled but nextra=%d. Must be > 0\n", nextra);
-        fprintf(stderr, "Disable WRITE_EXTRA_DOUBLES in Makefile if you have no extra doubles to write\n");
-        exit(EXIT_FAILURE);
-    }
-
-    /*========================================================================*/
-    /* MPI stuff */
-    int nprocs, rank, nworkers;
-    int user_control, flag;
-    user_control = 0;
-    MPI_Initialized(&flag);
-
-    if (flag){
-        user_control = 1; //the user has already called MPI_Init; will be responsible for calling MPI_Finalize
-    }
-    else{
-        MPI_Init(argc,argv);
-    }
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    /* chain things */
-    int nwalkers_over_two;
-
-    /*========================================================================*/
-    /* check that nwalkers is even */
-    if(nwalkers%2==1){
-        if(rank==0){
-            fprintf(stderr, "Nwalkers= %d. Use an even number of walkers. They will be split into two ensembles\n",
-                    nwalkers);
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Finalize();
-        exit(EXIT_FAILURE);
-    }
-
-    nwalkers_over_two = nwalkers/2;
-    nworkers = nprocs-1;
-
-    if(nworkers>nwalkers_over_two){
-        if(rank==0){
-            fprintf(stderr, "Attempting to split a 'half-ensemble' of %d walkers across %d workers.\n",
-                    nwalkers_over_two, nworkers);
-            fprintf(stderr, "Change the number of workers and walkers\n");
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Finalize();
-        exit(EXIT_FAILURE);
-    }
-
     if(rank==0){
-        manager(nwalkers, nsteps, npars, nextra, nburn, resume, a, start_pos, fname);
+        manager(nwalkers, nsteps, npars, nextra, resume, a, start_pos, fname);
     }
     else worker(npars, nextra, userdata, lnprob);
-
-    /* end MPI */
-    if (user_control==0) MPI_Finalize();
-}
 #endif
+}

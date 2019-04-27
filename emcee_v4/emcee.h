@@ -89,18 +89,16 @@ void manager(int nwalkers, int nsteps, int npars, int nextra, int nburn,
 void worker(int npars, const void *userdata, double (*lnprob)(const double *, int, const void *));
 
 /* run chain with loadbalancing enabled */
-void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
-               int nburn, int resume, double a, walker_pos *start_pos,
-               double (*lnprob)(const double *, int, const void *),
+void run_chain(int nwalkers, int nsteps, int npars, int resume, double a,
+               walker_pos *start_pos, double (*lnprob)(const double *, int, const void *),
                const void *userdata, const char *fname);
 #else
 void worker(int npars, int nextra, const void *userdata,
             double (*lnprob)(const double *, int, const void *, int, double*));
 
 /* run chain with loadbalancing enabled */
-void run_chain(int *argc, char ***argv, int nwalkers, int nsteps, int npars,
-               int nextra, int nburn, int resume, double a, walker_pos *start_pos,
-               double (*lnprob)(const double *, int, const void *, int, double*),
+void run_chain(int nwalkers, int nsteps, int npars, int nextra, int resume, double a,
+               walker_pos *start_pos, double (*lnprob)(const double *, int, const void *, int, double*),
                const void *userdata, const char *fname);
 #endif //#ifdef WRITE_EXTRA_DOUBLES
 
