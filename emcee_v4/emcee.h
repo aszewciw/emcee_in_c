@@ -77,8 +77,8 @@ void update_positions(int nwalkers, int npars, int nextra, double *z_array,
     (4) accepting/rejecting trial positions
     (5) writing the ensemble state to a file
  */
-void manager(int nwalkers, int nsteps, int npars, int nextra, int nburn,
-             int resume, double a, walker_pos *start_pos, const char *fname);
+void manager(int nwalkers, int nsteps, int npars, int nextra, int resume,
+             double a, walker_pos *start_pos, const char *fname);
 
 /*
   worker (processes 1 - nprocs) is responsible for:
