@@ -8,8 +8,13 @@ and implemented in Python by [Foreman-Mackey et al. (2013)](https://ui.adsabs.ha
 
 # Installation
 * To install this software, simply clone the repository using:
+
+```
     git clone https://github.com/aszewciw/emcee_in_c.git
+```
+
 * Alternatively, `emcee_in_c` can be set up as a submodule within another repository. The process for doing this is general and is described well in [this link](https://git-scm.com/book/en/v2/Git-Tools-Submodules).
+
 * Use of this software requires an installation of MPI.
 
 # How to Use
