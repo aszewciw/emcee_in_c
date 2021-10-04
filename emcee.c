@@ -111,7 +111,6 @@ int walker_accept(int npars, double lnprob_old, double lnprob_new, double z)
 /* -------------------------------------------------------------------------- */
 double rand_0to1(void)
 {
-    // I think this is sufficient...honestly, who actually would use this with RAND_MAX~32000?
     return (double)rand() / (double)RAND_MAX ;
 }
 
@@ -140,8 +139,8 @@ unsigned long rand_walker(unsigned long max)
     long x;
 
     num_bins = (unsigned long) max;
-    num_rand = (unsigned long) RAND_MAX + 1,
-    bin_size = num_rand / num_bins,
+    num_rand = (unsigned long) RAND_MAX + 1;
+    bin_size = num_rand / num_bins;
     defect   = num_rand % num_bins;
     do
     {
