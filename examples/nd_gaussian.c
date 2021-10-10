@@ -83,7 +83,7 @@ int main( int argc, char ** argv )
     fclose(file);
 
     /* make space for initial position */
-    start_pos = allocate_walkers(nwalkers,npars);
+    start_pos = allocate_walkers(nwalkers,npars,0);
     /* read in guesses */
     if((file=fopen(guess_fname,"r"))==NULL){
         fprintf(stderr, "Error: Cannot open file %s\n", guess_fname);
@@ -96,11 +96,11 @@ int main( int argc, char ** argv )
     }
     fclose(file);
 
-    const char fname[]="nd_gaussian_chain_cversion.dat";
+    const char fname[] = "nd_gaussian_chain_cversion.dat";
 
     // fprintf(stderr, "Ready to start chain\n");
     // start_pos = make_guess(guess,ballsize,nwalkers,npars);
-    run_chain(&argc, &argv, nwalkers, nsteps, npars, resume, a, start_pos,
+    run_chain(nwalkers, nsteps, npars, resume, a, start_pos,
               &lnprob, gaussian_data, fname);
 
     free_walkers(nwalkers,start_pos);
