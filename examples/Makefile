@@ -1,7 +1,7 @@
 
 EMCEE_DIR=..
 CC=mpicc
-CFLAGS=-cc=icc -I$(UTILS_DIR) -Wall
+CFLAGS=-cc=icc -I$(EMCEE_DIR) -Wall
 CLINK= -limf
 
 TARGET = run_mcmc
