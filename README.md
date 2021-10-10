@@ -10,7 +10,7 @@ and implemented in Python by [Foreman-Mackey et al. (2013)](https://ui.adsabs.ha
 * To install this software, simply clone the repository using:
 
 ```
-    git clone https://github.com/aszewciw/emcee_in_c.git
+git clone https://github.com/aszewciw/emcee_in_c.git
 ```
 
 * Alternatively, `emcee_in_c` can be set up as a submodule within another repository. The process for doing this is general and is described well in [this link](https://git-scm.com/book/en/v2/Git-Tools-Submodules).
@@ -18,7 +18,12 @@ and implemented in Python by [Foreman-Mackey et al. (2013)](https://ui.adsabs.ha
 * Use of this software requires an installation of MPI.
 
 # How to Use
-Forthcoming...
+See `examples` for an example script (and Makefile) in which we sample from a 5-dimensional Gaussian.
+After compiling `run_mcmc`, run this script with the following command, filling in the number of MPI processes:
+
+```
+mpirun -n [NUM_PROC] ./run_mcmc
+```
 
 # Notes to the user
 This software is free to use under the terms of the MIT License.
