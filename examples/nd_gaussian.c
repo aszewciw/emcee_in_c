@@ -31,9 +31,9 @@ int main( int argc, char ** argv )
 {
     int ipar, jpar, iwalker, npars, nwalkers, nsteps, resume;
     double a = 2.0;
-    char data_fname[] = "means.dat";
-    char icov_fname[] = "icov.dat";
-    char guess_fname[] = "guesses.dat";
+    char data_fname[] = "data/means.dat";
+    char icov_fname[] = "data/icov.dat";
+    char guess_fname[] = "data/guesses.dat";
     FILE *file;
     mydata *gaussian_data;
     walker_pos *start_pos;
@@ -96,7 +96,7 @@ int main( int argc, char ** argv )
     }
     fclose(file);
 
-    const char fname[] = "nd_gaussian_chain_cversion.dat";
+    const char fname[] = "data/nd_gaussian_chain_cversion.dat";
 
     // fprintf(stderr, "Ready to start chain\n");
     // start_pos = make_guess(guess,ballsize,nwalkers,npars);
