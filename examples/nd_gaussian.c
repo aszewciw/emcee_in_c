@@ -38,6 +38,8 @@ int main( int argc, char ** argv )
     mydata *gaussian_data;
     walker_pos *start_pos;
 
+    MPI_Init(&argc, &argv);
+
     resume = 0;
 
     npars = 5;
@@ -103,10 +105,12 @@ int main( int argc, char ** argv )
     run_chain(nwalkers, nsteps, npars, resume, a, start_pos,
               &lnprob, gaussian_data, fname);
 
+    MPI_Barrier(MPI_COMM_WORLD);
     free_walkers(nwalkers,start_pos);
     free(gaussian_data->data);
     free(gaussian_data->ivar);
     free(gaussian_data);
+    MPI_Finalize();
 
     return 0;
 }
