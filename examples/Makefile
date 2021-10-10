@@ -7,7 +7,7 @@ CLINK= -limf
 TARGET = run_mcmc
 all: $(TARGET)
 
-run_mcmc: test.o $(EMCEE_DIR)/emcee.o
+run_mcmc: nd_gaussian.o $(EMCEE_DIR)/emcee.o
 	$(CC) $(CFLAGS) -o $@ $^ $(CLINK)
 
 clean:
